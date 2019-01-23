@@ -1,4 +1,5 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.wso2.carbon.apimgt</groupId>
@@ -35,6 +36,9 @@
                     <groupId>org.codehaus.mojo</groupId>
                     <artifactId>versions-maven-plugin</artifactId>
                     <version>2.7</version>
+                    <configuration>
+                        <outputDirectory>${basedir}/target/</outputDirectory>
+                    </configuration>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -696,7 +700,6 @@
             </dependency>
 
 
-
             <dependency>
                 <groupId>org.wso2.carbon.apimgt</groupId>
                 <artifactId>org.wso2.carbon.apimgt.statsupdate.stub</artifactId>
@@ -951,7 +954,6 @@
                 <version>${carbon.apimgt.version}</version>
                 <type>zip</type>
             </dependency>
-
 
 
             <dependency>
@@ -1434,7 +1436,8 @@
 
         <!-- Carbon Identity import version ranges -->
         <carbon.identity.imp.pkg.version>[5.11.0, 6.0.0)</carbon.identity.imp.pkg.version>
-        <carbon.identity-inbound-auth-oauth.imp.pkg.version>[6.0.0, 7.0.0)</carbon.identity-inbound-auth-oauth.imp.pkg.version>
+        <carbon.identity-inbound-auth-oauth.imp.pkg.version>[6.0.0, 7.0.0)
+        </carbon.identity-inbound-auth-oauth.imp.pkg.version>
         <carbon.identity-user-ws.imp.pkg.version>[5.1.0, 6.0.0)</carbon.identity-user-ws.imp.pkg.version>
 
         <carbon.mediation.imp.pkg.version>[4.0.0, 5.0.0)</carbon.mediation.imp.pkg.version>
