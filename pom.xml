@@ -32,36 +32,78 @@
     <build>
         <pluginManagement>
             <plugins>
-                <plugin>
-                    <groupId>org.owasp</groupId>
-                    <artifactId>dependency-check-maven</artifactId>
-                    <version>4.0.2</version>
-                    <executions>
-                        <execution>
-                            <goals>
-                                <goal>check</goal>
-                            </goals>
-                        </execution>
-                    </executions>
-                </plugin>
+                <!--<plugin>-->
+                    <!--<groupId>org.owasp</groupId>-->
+                    <!--<artifactId>dependency-check-maven</artifactId>-->
+                    <!--<version>4.0.2</version>-->
+                    <!--<executions>-->
+                        <!--<execution>-->
+                            <!--<goals>-->
+                                <!--<goal>check</goal>-->
+                            <!--</goals>-->
+                        <!--</execution>-->
+                    <!--</executions>-->
+                <!--</plugin>-->
                 <plugin>
                     <groupId>org.codehaus.mojo</groupId>
                     <artifactId>versions-maven-plugin</artifactId>
                     <version>2.7</version>
                     <configuration>
-                        <outputDirectory>${basedir}/target/</outputDirectory>
-                        <formats>[html,xml]</formats>
+                        <outputDirectory>${basedir}/dependency-report</outputDirectory>
+                        <formats>html</formats>
                     </configuration>
+                    <!--<executions>-->
+                        <!--<execution>-->
+                            <!--<configuration>-->
+                                <!--<id>generate-css-report</id>-->
+                                <!--<goals>-->
+                                    <!--<goal>dependency-updates-report</goal>-->
+                                <!--</goals>-->
+                                <!--<tasks>-->
+                                    <!--<echo>Using env.test.properties</echo>-->
+                                    <!--<mkdir dir="/Users/dushansilva/projects-wso2/carbon-apimgt/target/css"/>-->
+                                    <!--<copy file="/Users/dushansilva/projects-wso2/carbon-apimgt/css/maven-base.css"-->
+                                          <!--tofile="/Users/dushansilva/projects-wso2/carbon-apimgt/target/css"/>-->
+                                    <!--<copy file="/Users/dushansilva/projects-wso2/carbon-apimgt/css/maven-theme.css"-->
+                                          <!--tofile="/Users/dushansilva/projects-wso2/carbon-apimgt/"/>-->
+                                <!--</tasks>-->
+                            <!--</configuration>-->
+                        <!--</execution>-->
+                    <!--</executions>-->
+                </plugin>
+                <!--<plugin>-->
+                    <!--<groupId>org.apache.maven.plugins</groupId>-->
+                    <!--<artifactId>maven-antrun-plugin</artifactId>-->
+                    <!--<version>1.8</version>-->
+                    <!--<executions>-->
+                        <!--<execution>-->
+                            <!--<configuration>-->
+                                <!--<id>generate-css-report</id>-->
+                                <!--<phase>package</phase>-->
+                                <!--<goals>-->
+                                    <!--<goal>dependency-updates-report</goal>-->
+                                <!--</goals>-->
+                                <!--<tasks>-->
+                                    <!--&lt;!&ndash;<echo>Using env.test.properties</echo>&ndash;&gt;-->
+                                    <!--&lt;!&ndash;<mkdir dir="/Users/dushansilva/projects-wso2/carbon-apimgt/target/css"/>&ndash;&gt;-->
+                                    <!--<copy file="/Users/dushansilva/projects-wso2/carbon-apimgt/css/maven-base.css"-->
+                                          <!--tofile="/Users/dushansilva/projects-wso2/carbon-apimgt/"/>-->
+                                    <!--&lt;!&ndash;<copy file="/Users/dushansilva/projects-wso2/carbon-apimgt/css/maven-theme.css"&ndash;&gt;-->
+                                          <!--&lt;!&ndash;tofile="/Users/dushansilva/projects-wso2/carbon-apimgt/target/css"/>&ndash;&gt;-->
+                                <!--</tasks>-->
+                            <!--</configuration>-->
+                        <!--</execution>-->
+                    <!--</executions>-->
+                <!--</plugin>-->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-project-info-reports-plugin</artifactId>
+                    <version>${maven-project-info-reports-plugin.version}</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-site-plugin</artifactId>
                     <version>${maven-site-plugin.version}</version>
-                </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-project-info-reports-plugin</artifactId>
-                    <version>${maven-project-info-reports-plugin.version}</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.felix</groupId>
@@ -268,15 +310,34 @@
             </extension>
         </extensions>
     </build>
-    <reporting>
-        <plugins>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>versions-maven-plugin</artifactId>
-                <version>2.7</version>
-            </plugin>
-        </plugins>
-    </reporting>
+    <!--<reporting>-->
+        <!--<plugins>-->
+            <!--<plugin>-->
+                <!--<groupId>org.apache.maven.plugins</groupId>-->
+                <!--<artifactId>maven-project-info-reports-plugin</artifactId>-->
+                <!--<version>${maven-project-info-reports-plugin.version}</version>-->
+                <!--<reportSets>-->
+                    <!--<reportSet>-->
+                        <!--<reports>-->
+                            <!--<report>index</report>-->
+                        <!--</reports>-->
+                    <!--</reportSet>-->
+                <!--</reportSets>-->
+            <!--</plugin>-->
+            <!--<plugin>-->
+                <!--<groupId>org.codehaus.mojo</groupId>-->
+                <!--<artifactId>versions-maven-plugin</artifactId>-->
+                <!--<version>2.7</version>-->
+                <!--<reportSets>-->
+                    <!--<reportSet>-->
+                        <!--<reports>-->
+                            <!--<report>dependency-updates-report</report>-->
+                        <!--</reports>-->
+                    <!--</reportSet>-->
+                <!--</reportSets>-->
+            <!--</plugin>-->
+        <!--</plugins>-->
+    <!--</reporting>-->
     <repositories>
         <repository>
             <id>wso2-nexus</id>
