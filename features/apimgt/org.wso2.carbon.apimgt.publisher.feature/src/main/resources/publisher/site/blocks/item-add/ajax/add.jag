@@ -22,6 +22,31 @@ if(jagg.isCSRFTokenValid())
         if (request.getMethod() == 'POST' && (action === "addAPI" ||action === "updateAPI")) {
             mod = jagg.module("api");
             var apiData = {};
+            var user = jagg.getUser().username;
+
+            if (request.getParameter("accessControl") == "restricted") {
+                var accessControlRoles = request.getParameter("accessControlRoles", "UTF-8");
+                result = mod.validateRoles(accessControlRoles, user, "true");
+                if (!result.valid) {
+                    print({
+                        error: true,
+                        message: msg.error.backendError(action) + ", Role does not exist"
+                    });
+                    return;
+                }
+            }
+
+            if (request.getParameter("visibility") == "restricted") {
+                var visibilityRoles = request.getParameter("roles", "UTF-8");
+                result = mod.validateRoles(visibilityRoles, user, null);
+                if (!result.valid) {
+                    print({
+                        error: true,
+                        message: msg.error.backendError(action) + ", Role does not exist"
+                    });
+                    return;
+                }
+            }
 
             apiData.request = request;
             apiData.apiName = request.getParameter("name", "UTF-8");
