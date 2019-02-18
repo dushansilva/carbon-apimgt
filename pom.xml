@@ -70,7 +70,7 @@
                     <version>2.7</version>
                     <configuration>
                         <outputDirectory>${basedir}/target</outputDirectory>
-                        <formats>html</formats>
+                        <formats>xml,html</formats>
                     </configuration>
                     <!--<executions>-->
                         <!--<execution>-->
