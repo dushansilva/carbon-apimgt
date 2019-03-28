@@ -1,15 +1,3 @@
-body {
-  padding: 0px 0px 10px 0px;
+h3 {
+  font-size: 100px;
 }
-body, td, select, input, li{
-  font-family: Verdana, Helvetica, Arial, sans-serif;
-  font-size: 13px;
-}
-code{
-  font-family: Courier, monospace;
-  font-size: 13px;
-}
-a {
-  text-decoration: none;
-}
-
