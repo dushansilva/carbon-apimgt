@@ -22,19 +22,19 @@ a:active, a:hover {
   color:#69c;
 }
 #legend li.externalLink {
-  background: url(../images/external.png) left top no-repeat;
+  /* background: url(../images/external.png) left top no-repeat; */
   padding-left: 18px;
 }
 a.externalLink, a.externalLink:link, a.externalLink:visited, a.externalLink:active, a.externalLink:hover {
-  background: url(../images/external.png) right center no-repeat;
+  /* background: url(../images/external.png) right center no-repeat; */
   padding-right: 18px;
 }
 #legend li.newWindow {
-  background: url(../images/newwindow.png) left top no-repeat;
+  /* background: url(../images/newwindow.png) left top no-repeat; */
   padding-left: 18px;
 }
 a.newWindow, a.newWindow:link, a.newWindow:visited, a.newWindow:active, a.newWindow:hover {
-  background: url(../images/newwindow.png) right center no-repeat;
+  /* background: url(../images/newwindow.png) right center no-repeat; */
   padding-right: 18px;
 }
 h2 {
@@ -124,18 +124,18 @@ dt {
   border-bottom: 1px solid #fff;
 }
 .errormark, .warningmark, .donemark, .infomark {
-  background: url(../images/icon_error_sml.gif) no-repeat;
+  /* background: url(../images/icon_error_sml.gif) no-repeat; */
 }
 
 .warningmark {
-  background-image: url(../images/icon_warning_sml.gif);
+  /* background-image: url(../images/icon_warning_sml.gif); */
 }
 
 .donemark {
-  background-image: url(../images/icon_success_sml.gif);
+  /* background-image: url(../images/icon_success_sml.gif); */
 }
 
 .infomark {
-  background-image: url(../images/icon_info_sml.gif);
+  /* background-image: url(../images/icon_info_sml.gif); */
 }
 
