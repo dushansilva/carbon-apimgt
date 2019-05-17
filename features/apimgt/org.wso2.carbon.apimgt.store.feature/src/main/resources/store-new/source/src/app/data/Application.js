@@ -53,12 +53,14 @@ export default class Application extends Resource {
 
     /***
      * Get keys of the current instance of an application
-     * @param key_type {string} Key type either `Production` or `SandBox`
+     * @param keyType {string} Key type either `Production` or `SandBox`
      * @returns {promise} Set the fetched CS/CK into current instance and return keys array as Promise object
      */
-    getKeys(key_type) {
+    getKeys(keyType) {
         let promise_keys = this.client.then((client) => {
-            return client.apis["Applications"].get_applications__applicationId__keys({ applicationId: this.id });
+            console.log(client.apis['Application Keys']);
+
+            return client.apis['Application Keys'].get_applications__applicationId__keys({ applicationId: this.applicationId });
         });
         return promise_keys.then(keys_response => {
             this._setKeys(keys_response.obj);
@@ -100,16 +102,20 @@ export default class Application extends Resource {
     generateKeys(key_type, supportedGrantTypes, callbackUrl, tokenType) {
         let promised_keys = this.client.then((client) => {
             let request_content =
-                {
-                    keyType: key_type, /* TODO: need to support dynamic key types ~tmkb*/
-                    grantTypesToBeSupported: supportedGrantTypes,
-                    callbackUrl: callbackUrl,
-                    tokenType: tokenType
-                };
-            let payload = { applicationId: this.id, body: request_content };
-            return client.apis["Applications"].post_applications__applicationId__generate_keys(payload);
+            {
+                keyType: key_type, /* TODO: need to support dynamic key types ~tmkb*/
+                grantTypesToBeSupported: supportedGrantTypes,
+                callbackUrl: callbackUrl,
+                tokenType: tokenType
+            };
+            let payload = { applicationId: this.applicationId, body: request_content };
+            debugger;
+            return client.apis['Application Keys'].post_applications__applicationId__generate_keys(payload);
         });
-        return promised_keys.then(keys_response => {
+        return promised_keys.then(keysResponse => {
+            console.log(this.applicationId);
+            console.log(keysResponse);
+
             this.keys.set(key_type, keys_response.obj);
             return this.keys.get(key_type);
         });
@@ -135,7 +141,7 @@ export default class Application extends Resource {
                 callbackUrl: callbackUrl,
                 keyType: key_type,
                 tokenType: tokenType
-              }
+            }
             let payload = { applicationId: this.id, keyType: key_type, body: request_content };
             return client.apis["Applications"].put_applications__applicationId__keys__keyType_(payload);
         });

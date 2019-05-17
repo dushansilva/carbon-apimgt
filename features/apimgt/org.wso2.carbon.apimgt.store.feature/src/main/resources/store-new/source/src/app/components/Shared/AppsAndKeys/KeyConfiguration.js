@@ -51,6 +51,7 @@ class KeyConfiguration extends React.Component {
       tokenType: "OAUTH"
     };
     this.appId = this.props.selectedApp.appId || this.props.selectedApp.value;
+    this.application = Application.get(this.appId);
     this.handleCheckboxChange = this.handleCheckboxChange.bind(this);
     this.handleTextChange = this.handleTextChange.bind(this);
     this.handleTokenTypeChange = this.handleTokenTypeChange.bind(this);
@@ -114,6 +115,7 @@ class KeyConfiguration extends React.Component {
   }
   generateKeys() {
     const { application } = this.state;
+    debugger;
     const keys = application.keys.get(this.key_type) || {
       supportedGrantTypes: ["client_credentials"]
     };
@@ -146,19 +148,16 @@ class KeyConfiguration extends React.Component {
    * Fetch Application object by ID coming from URL path params and fetch related keys to display
    */
   componentDidMount() {
-    let promised_app = Application.get(this.appId);
-    promised_app
-      .then(application => {
-        application
-          .getKeys()
-          .then(() => this.setState({ application: application }));
+    this.application.then(application => application.getKeys())
+      .then((resp) => {
+        console.log(resp);
+        this.setState({ application: application })
       })
       .catch(error => {
         if (process.env.NODE_ENV !== "production") {
-          console.log(error);
+          console.error(error);
         }
-        let status = error.status;
-        if (status === 404) {
+        if (error.status === 404) {
           this.setState({ notFound: true });
         }
       });
@@ -188,10 +187,10 @@ class KeyConfiguration extends React.Component {
       <React.Fragment>
         <FormControl className={classes.FormControl} component="fieldset">
           <InputLabel
-              shrink
-              htmlFor="age-label-placeholder"
-              className={classes.quotaHelp}
-            >
+            shrink
+            htmlFor="age-label-placeholder"
+            className={classes.quotaHelp}
+          >
             <FormattedMessage id="token.type" defaultMessage="Token Type" />
           </InputLabel>
           <RadioGroup
@@ -307,8 +306,8 @@ class KeyConfiguration extends React.Component {
               value={callbackUrl}
             />
             <FormHelperText>
-            Callback URL is a redirection URI in the client application which is used by the authorization 
-            server to send the client's user-agent (usually web browser) back after granting access.
+              Callback URL is a redirection URI in the client application which is used by the authorization
+              server to send the client's user-agent (usually web browser) back after granting access.
           </FormHelperText>
           </FormControl>
         }
