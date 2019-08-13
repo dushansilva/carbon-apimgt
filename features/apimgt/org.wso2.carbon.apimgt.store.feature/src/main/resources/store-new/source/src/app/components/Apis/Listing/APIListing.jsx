@@ -24,8 +24,8 @@ import CommonListing from './CommonListing';
  *
  * @returns
  */
-function APIListing()  {
-    return <CommonListing isApiProduct={false} />;
+function APIListing() {
+    return <CommonListing kind='apis' />;
 }
 
 export default (APIListing);
