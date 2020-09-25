@@ -62,6 +62,7 @@ import org.apache.http.client.methods.HttpPut;
 import org.apache.http.conn.params.ConnRoutePNames;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.bson.Document;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.XML;
@@ -114,6 +115,7 @@ import org.wso2.carbon.apimgt.impl.utils.APIMWSDLReader;
 import org.wso2.carbon.apimgt.impl.utils.APIUtil;
 import org.wso2.carbon.apimgt.impl.utils.APIVersionStringComparator;
 import org.wso2.carbon.apimgt.impl.utils.CertificateMgtUtils;
+import org.wso2.carbon.apimgt.impl.utils.MongoDBUtils;
 import org.wso2.carbon.apimgt.impl.wsdl.SequenceGenerator;
 import org.wso2.carbon.apimgt.impl.wsdl.model.WSDLValidationResponse;
 import org.wso2.carbon.apimgt.impl.wsdl.util.SOAPOperationBindingUtils;
@@ -216,8 +218,9 @@ public class ApisApiServiceImpl implements ApisApiService {
                     offset, limit, false, !expand);
             Set<API> apis = (Set<API>) result.get("apis");
             allMatchedApis.addAll(apis);
+            List resultFromMongo = MongoDBUtils.retrieveAPIs();
 
-            apiListDTO = APIMappingUtil.fromAPIListToDTO(allMatchedApis, expand);
+            apiListDTO = APIMappingUtil.fromListToDTO(resultFromMongo);
 
             //Add pagination section in the response
             Object totalLength = result.get("length");
@@ -1866,6 +1869,7 @@ public class ApisApiServiceImpl implements ApisApiService {
                             "or MARKDOWN", log);
                 }
                 apiProvider.addDocumentationContent(api, documentation.getName(), inlineContent);
+                MongoDBUtils.addDocContent(documentation, documentation.getName(), inlineContent);
             } else {
                 RestApiUtil.handleBadRequest("Either 'file' or 'inlineContent' should be specified", log);
             }
