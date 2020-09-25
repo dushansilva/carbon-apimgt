@@ -55,6 +55,7 @@ import org.wso2.carbon.apimgt.impl.APIMRegistryServiceImpl;
 import org.wso2.carbon.apimgt.impl.definitions.OASParserUtil;
 import org.wso2.carbon.apimgt.impl.internal.ServiceReferenceHolder;
 import org.wso2.carbon.apimgt.impl.utils.APIUtil;
+import org.wso2.carbon.apimgt.impl.utils.MongoAPI;
 import org.wso2.carbon.apimgt.impl.wsdl.model.WSDLInfo;
 import org.wso2.carbon.apimgt.impl.wsdl.model.WSDLValidationResponse;
 import org.wso2.carbon.apimgt.rest.api.publisher.v1.dto.APIBusinessInformationDTO;
@@ -535,6 +536,15 @@ public class APIMappingUtil {
         }
     }
 
+    public static Object fromListToDTO(List<MongoAPI> apiList) {
+        APIListDTO apiListDTO = new APIListDTO();
+        List<APIInfoDTO> apiInfoDTOs = apiListDTO.getList();
+        for (MongoAPI api : apiList) {
+            apiInfoDTOs.add(fromAPIToInfoDTO(api));
+        }
+        return  apiListDTO;
+    }
+
     /**
      * Converts a List object of APIs into Info DTO List
      *
@@ -625,6 +635,26 @@ public class APIMappingUtil {
         } else {
             apiInfoDTO.setHasThumbnail(false);
         }
+        return apiInfoDTO;
+    }
+
+    public static APIInfoDTO fromAPIToInfoDTO(MongoAPI api) {
+
+        APIInfoDTO apiInfoDTO = new APIInfoDTO();
+        apiInfoDTO.setDescription(api.getDescription());
+        String context = api.getContext();
+        if (context.endsWith("/" + RestApiConstants.API_VERSION_PARAM)) {
+            context = context.replace("/" + RestApiConstants.API_VERSION_PARAM, "");
+        }
+        apiInfoDTO.setContext(context);
+        apiInfoDTO.setId(api.get_id().toString());
+        apiInfoDTO.setName(api.getName());
+        apiInfoDTO.setVersion(api.getVersion());
+        apiInfoDTO.setType(api.getType());
+        String providerName = api.getApiOwner();
+        apiInfoDTO.setProvider(APIUtil.replaceEmailDomainBack(providerName));
+        apiInfoDTO.setLifeCycleStatus(api.getLcStatus());
+
         return apiInfoDTO;
     }
 

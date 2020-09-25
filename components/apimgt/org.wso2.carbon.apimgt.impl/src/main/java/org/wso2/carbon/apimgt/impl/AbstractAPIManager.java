@@ -77,6 +77,7 @@ import org.wso2.carbon.apimgt.impl.dto.WorkflowDTO;
 import org.wso2.carbon.apimgt.impl.factory.KeyManagerHolder;
 import org.wso2.carbon.apimgt.impl.indexing.indexer.DocumentIndexer;
 import org.wso2.carbon.apimgt.impl.internal.ServiceReferenceHolder;
+import org.wso2.carbon.apimgt.impl.mongodb.MongoDBPersistentDAO;
 import org.wso2.carbon.apimgt.impl.token.ClaimsRetriever;
 import org.wso2.carbon.apimgt.impl.utils.APIAPIProductNameComparator;
 import org.wso2.carbon.apimgt.impl.utils.APINameComparator;
@@ -491,6 +492,7 @@ public abstract class AbstractAPIManager implements APIManager {
     public API getAPIbyUUID(String uuid, String requestedTenantDomain) throws APIManagementException {
         boolean tenantFlowStarted = false;
         try {
+            MongoDBPersistentDAO.getInstance().getAPI(uuid);
             Registry registry;
             if (requestedTenantDomain != null && !MultitenantConstants.SUPER_TENANT_DOMAIN_NAME.equals
                     (requestedTenantDomain)) {
