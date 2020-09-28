@@ -122,6 +122,7 @@ import org.wso2.carbon.apimgt.impl.dto.WorkflowProperties;
 import org.wso2.carbon.apimgt.impl.factory.KeyManagerHolder;
 import org.wso2.carbon.apimgt.impl.internal.ServiceReferenceHolder;
 import org.wso2.carbon.apimgt.impl.monetization.DefaultMonetizationImpl;
+import org.wso2.carbon.apimgt.impl.mongodb.MongoDBPersistentDAO;
 import org.wso2.carbon.apimgt.impl.notification.NotificationDTO;
 import org.wso2.carbon.apimgt.impl.notification.NotificationExecutor;
 import org.wso2.carbon.apimgt.impl.notification.NotifierConstants;
@@ -1747,7 +1748,8 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
                                         endpointSecurity.setCustomParameters(oldEndpointSecurity.getCustomParameters());
                                     }
                                 }
-                                endpointSecurityJson.replace(APIConstants.ENDPOINT_SECURITY_PRODUCTION, new JSONParser()
+                                endpointSecurityJson.replace(APIConstants.ENDPOINT_SECURITY_PRODUCTION,
+                                        new JSONParser()
                                         .parse(new ObjectMapper().writeValueAsString(endpointSecurity)));
                             }
                         }
@@ -1796,6 +1798,8 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
     private void updateApiArtifact(API api, boolean updateMetadata, boolean updatePermissions)
             throws APIManagementException {
 
+        //mongodb
+        MongoDBPersistentDAO.getInstance().updateAPI(api);
         //Validate Transports
         validateAndSetTransports(api);
         validateAndSetAPISecurity(api);
@@ -3880,9 +3884,9 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
             }
             GenericArtifact artifact = APIUtil.createAPIArtifactContent(genericArtifact, api);
             artifactManager.addGenericArtifact(artifact);
-            api.setUUID(artifact.getId());
-            Document apiTemplate = MongoDBUtils.createMongoAPIDocument(api);
-            MongoDBUtils.addCollection(apiTemplate);
+            //mongodb
+//            createMongodbAPI(api,artifact.getId());
+            MongoDBPersistentDAO.getInstance().createApi(api);
             //Attach the API lifecycle
             artifact.attachLifecycle(APIConstants.API_LIFE_CYCLE);
             String artifactPath = GovernanceUtils.getArtifactPath(registry, artifact.getId());
@@ -3954,6 +3958,12 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
         }
     }
 
+    private void createMongodbAPI(API api, String artifactId) throws APIManagementException {
+        api.setUUID(artifactId);
+        Document apiTemplate = MongoDBUtils.createMongoAPIDocument(api);
+        MongoDBUtils.addCollection(apiTemplate);
+    }
+
     /**
      * Update WSDLUri in the API Registry artifact
      *
@@ -4013,7 +4023,7 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
                 registry.addAssociation(artifact.getPath(), filePath, APIConstants.DOCUMENTATION_FILE_ASSOCIATION);
             }
             documentation.setId(artifact.getId());
-            MongoDBUtils.createDocumentation(api, documentation);
+            createMongodbAPIDocumentation(api, documentation);
         } catch (RegistryException e) {
             handleException("Failed to add documentation", e);
         } catch (UserStoreException e) {
@@ -4021,6 +4031,9 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
         }
     }
 
+    private void createMongodbAPIDocumentation(API api, Documentation documentation) throws APIManagementException {
+        MongoDBUtils.createDocumentation(api, documentation);
+    }
 
     private String[] getAuthorizedRoles(String artifactPath) throws UserStoreException {
         String resourcePath = RegistryUtils.getAbsolutePath(RegistryContext.getBaseInstance(),

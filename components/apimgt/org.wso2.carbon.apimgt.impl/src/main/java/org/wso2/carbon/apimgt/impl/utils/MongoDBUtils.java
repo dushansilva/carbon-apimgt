@@ -1,7 +1,9 @@
 package org.wso2.carbon.apimgt.impl.utils;
 
 import com.google.gson.Gson;
-import com.mongodb.MongoClient;
+//import com.mongodb.MongoClient;
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
@@ -202,7 +204,11 @@ public class MongoDBUtils {
     }
 
     public static void createConnection() {
-        mongo = new MongoClient( "localhost" , 27017 );
+//        mongo = new MongoClient( "localhost" , 27017 );
+//        MongoDatabase database = mongo.getDatabase("APIM_DB");
+//        apisCollection =  database.getCollection("APIs");
+        mongo = MongoClients.create("mongodb+srv://admin:admin@wso2-apim-cluster.eowdj.azure.mongodb" +
+                        ".net/test?retryWrites=true&w=majority");
         MongoDatabase database = mongo.getDatabase("APIM_DB");
         apisCollection =  database.getCollection("APIs");
     }
