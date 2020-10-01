@@ -218,9 +218,9 @@ public class ApisApiServiceImpl implements ApisApiService {
                     offset, limit, false, !expand);
             Set<API> apis = (Set<API>) result.get("apis");
             allMatchedApis.addAll(apis);
-            List resultFromMongo = MongoDBUtils.retrieveAPIs();
+//            List resultFromMongo = MongoDBUtils.retrieveAPIs();
 
-            apiListDTO = APIMappingUtil.fromListToDTO(resultFromMongo);
+            apiListDTO = APIMappingUtil.fromAPIListToDTO(allMatchedApis, expand);
 
             //Add pagination section in the response
             Object totalLength = result.get("length");
