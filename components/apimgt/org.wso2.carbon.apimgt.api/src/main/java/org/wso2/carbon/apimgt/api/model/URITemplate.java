@@ -49,6 +49,7 @@ public class URITemplate implements Serializable{
     private String amznResourceName;
     private int amznResourceTimeout;
 
+
     public ConditionGroupDTO[] getConditionGroups() {
         return conditionGroups;
     }
@@ -119,6 +120,9 @@ public class URITemplate implements Serializable{
 
             return aggregatedScript.toString();
         }
+    }
+    public Map<String, String> getMediationScriptList() {
+        return mediationScripts;
     }
 
     public String getThrottlingTier() {
@@ -196,9 +200,17 @@ public class URITemplate implements Serializable{
         return httpVerb;
     }
 
+    public LinkedHashSet<String> getHttpVerbsList() {
+        return httpVerbs;
+    }
+
     public void setAuthTypes(String authType) {
 
         authTypes.add(authType);
+    }
+
+    public List<String> getAuthTypesList() {
+        return authTypes;
     }
 
     public String getAuthTypes() {
@@ -267,6 +279,14 @@ public class URITemplate implements Serializable{
     }
     public Scope getScopes() {
         return scope;
+    }
+
+    public List<Scope> getScopesList() {
+        return scopes;
+    }
+
+    public Set<APIProductIdentifier> getUsedByProducts() {
+        return usedByProducts;
     }
 
     public void setScope(Scope scope) {

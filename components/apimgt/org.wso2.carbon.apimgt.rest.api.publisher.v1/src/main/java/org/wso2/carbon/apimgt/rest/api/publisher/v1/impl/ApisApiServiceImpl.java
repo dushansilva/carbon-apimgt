@@ -111,6 +111,7 @@ import org.wso2.carbon.apimgt.impl.definitions.GraphQLSchemaDefinition;
 import org.wso2.carbon.apimgt.impl.definitions.OAS2Parser;
 import org.wso2.carbon.apimgt.impl.definitions.OAS3Parser;
 import org.wso2.carbon.apimgt.impl.definitions.OASParserUtil;
+import org.wso2.carbon.apimgt.impl.mongodb.MongoDBPersistentDAO;
 import org.wso2.carbon.apimgt.impl.utils.APIMWSDLReader;
 import org.wso2.carbon.apimgt.impl.utils.APIUtil;
 import org.wso2.carbon.apimgt.impl.utils.APIVersionStringComparator;
@@ -219,7 +220,7 @@ public class ApisApiServiceImpl implements ApisApiService {
             Set<API> apis = (Set<API>) result.get("apis");
             allMatchedApis.addAll(apis);
 //            List resultFromMongo = MongoDBUtils.retrieveAPIs();
-
+            MongoDBPersistentDAO.getInstance().getAPIs();
             apiListDTO = APIMappingUtil.fromAPIListToDTO(allMatchedApis, expand);
 
             //Add pagination section in the response

@@ -9,7 +9,17 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.codecs.pojo.ClassModel;
 import org.bson.codecs.pojo.PojoCodecProvider;
+import org.wso2.carbon.apimgt.api.model.APICategory;
+import org.wso2.carbon.apimgt.api.model.APIEndpoint;
+import org.wso2.carbon.apimgt.api.model.CORSConfiguration;
+import org.wso2.carbon.apimgt.api.model.DeploymentEnvironments;
+import org.wso2.carbon.apimgt.api.model.Label;
+import org.wso2.carbon.apimgt.api.model.Scope;
+import org.wso2.carbon.apimgt.api.model.Tier;
+import org.wso2.carbon.apimgt.api.model.URITemplate;
+import org.wso2.carbon.apimgt.api.model.policy.Policy;
 import org.wso2.carbon.apimgt.impl.utils.MongoDBUtils;
 
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
@@ -36,9 +46,36 @@ public final class MongoDBUtil {
                 ConnectionString connectionString = new ConnectionString("mongodb+srv://admin:admin@wso2-apim" +
                         "-cluster.eowdj.azure.mongodb.net/test?retryWrites=true&w=majority");
 
-                CodecRegistry pojoCodecRegistry = fromProviders(PojoCodecProvider.builder().automatic(true).build());
+                ClassModel<MongoDBAPIDocument> mongoDBAPIDocument = ClassModel.builder(MongoDBAPIDocument.class)
+                        .enableDiscriminator(true).build();
+                ClassModel<Label> label = ClassModel.builder(Label.class)
+                        .enableDiscriminator(true).build();
+                ClassModel<Scope> Scope = ClassModel.builder(Scope.class)
+                        .enableDiscriminator(true).build();
+                ClassModel<DeploymentEnvironments> deploymentEnv = ClassModel.builder(DeploymentEnvironments.class)
+                        .enableDiscriminator(true).build();
+                ClassModel<APIEndpoint> apiEndpoint = ClassModel.builder(APIEndpoint.class)
+                        .enableDiscriminator(true).build();
+                ClassModel<APICategory> apiCategory = ClassModel.builder(APICategory.class)
+                        .enableDiscriminator(true).build();
+                ClassModel<Policy> policy = ClassModel.builder(Policy.class)
+                        .enableDiscriminator(true).build();
+                ClassModel<TiersDocument> tier = ClassModel.builder(TiersDocument.class)
+                        .enableDiscriminator(true).build();
+                ClassModel<CORSConfigurationDocument> corsConfiguration =
+                        ClassModel.builder(CORSConfigurationDocument.class).enableDiscriminator(true).build();
+                ClassModel<APIProductIdentifierDocument> apiProductIdentifier =
+                        ClassModel.builder(APIProductIdentifierDocument.class).enableDiscriminator(true).build();
+                ClassModel<Scope> scope = ClassModel.builder(Scope.class).enableDiscriminator(true).build();
+                ClassModel<URITemplateDocument> uriTemplate = ClassModel.builder(URITemplateDocument.class)
+                        .enableDiscriminator(true).build();
+                CodecRegistry pojoCodecRegistry = fromProviders(PojoCodecProvider.builder()
+                        .register(tier, policy, mongoDBAPIDocument, Scope, corsConfiguration,
+                                label, deploymentEnv, apiEndpoint, apiCategory, apiProductIdentifier, scope,
+                                uriTemplate).build());
                 CodecRegistry codecRegistry = fromRegistries(MongoClientSettings
                         .getDefaultCodecRegistry(), pojoCodecRegistry);
+
                 MongoClientSettings clientSettings = MongoClientSettings.builder()
                         .applyConnectionString(connectionString)
                         .codecRegistry(codecRegistry)
