@@ -121,7 +121,7 @@ public class URITemplate implements Serializable{
             return aggregatedScript.toString();
         }
     }
-    public Map<String, String> getMediationScriptList() {
+    public Map<String, String> getMediationScriptMap() {
         return mediationScripts;
     }
 
