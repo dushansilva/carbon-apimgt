@@ -11,6 +11,7 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.wso2.carbon.apimgt.api.APIManagementException;
+import org.wso2.carbon.apimgt.api.APIMgtResourceNotFoundException;
 import org.wso2.carbon.apimgt.api.model.API;
 import org.bson.types.ObjectId;
 import org.wso2.carbon.apimgt.api.model.APIIdentifier;
@@ -34,6 +35,8 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
 
+import static com.mongodb.client.model.Filters.eq;
+
 public class MongoDBPersistentDAO {
 
     private static MongoDBPersistentDAO instance = null;
@@ -44,19 +47,48 @@ public class MongoDBPersistentDAO {
         collection.insertOne(mongoDBAPIDocument);
     }
 
-    public API getAPIs() throws APIManagementException {
+    public API getAPI(String apiId) throws APIManagementException {
         MongoCollection<MongoDBAPIDocument> collection = getCollection();
-        MongoCursor<MongoDBAPIDocument> iterator = collection.find().iterator();
-        while (iterator.hasNext()) {
-            MongoDBAPIDocument doc = iterator.next();
-            API api = fromMongoDocToAPI(doc);
-            System.out.println(api.getApiOwner());
-            System.out.println(doc.getAuthorizationHeader());
+        MongoDBAPIDocument mongoDBAPIDocument = collection.find(eq("_id", new ObjectId(apiId))).first();
+        if (mongoDBAPIDocument == null) {
+            String msg = "Failed to get API. " + apiId + " does not exist in mongodb database";
+            throw new APIMgtResourceNotFoundException(msg);
         }
-
-        return new API(new APIIdentifier("12", "213", "213"));
+        return fromMongoDocToAPI(mongoDBAPIDocument);
     }
 
+    public void updateAPI(API api) throws APIManagementException {
+        MongoCollection<MongoDBAPIDocument> collection = getCollection();
+        MongoDBAPIDocument mongoDBAPIDocument = fromAPIToMongoDoc(api);
+        collection.replaceOne(eq("_id", new ObjectId(api.getUUID())), mongoDBAPIDocument);
+    }
+
+    public void updateWsdlFromUrl(String apiId, String wsdlUrl) {
+        //Question? do we need to return the updated document
+
+    }
+
+//    public void Documentation getDocumentation(String docId, API api){
+//
+//    }
+    public void deleteAPI(String apiId) {
+        //Question? do we need to return the deleted document
+        MongoCollection<MongoDBAPIDocument> collection = getCollection();
+        collection.deleteOne(eq("_id", new ObjectId(apiId)));
+    }
+
+    //    public API getAPI(String apiId) throws APIManagementException {
+//        MongoCollection<MongoDBAPIDocument> collection = getCollection();
+//        MongoCursor<MongoDBAPIDocument> iterator = collection.find().iterator();
+//        while (iterator.hasNext()) {
+//            MongoDBAPIDocument doc = iterator.next();
+//            API api = fromMongoDocToAPI(doc);
+//            System.out.println(api.getApiOwner());
+//            System.out.println(doc.getAuthorizationHeader());
+//        }
+//
+//        return new API(new APIIdentifier("12", "213", "213"));
+//    }
     private MongoCollection<MongoDBAPIDocument> getCollection() {
         MongoClient mongoClient = MongoDBUtil.getMongoClient();
         MongoDatabase database = mongoClient.getDatabase("APIM_DB");
@@ -340,7 +372,7 @@ public class MongoDBPersistentDAO {
         api.setEnvironments(mongoDBAPIDocument.getEnvironments());
 
         CORSConfigurationDocument corsConfigDoc = mongoDBAPIDocument.getCorsConfiguration();
-        if(corsConfigDoc != null){
+        if (corsConfigDoc != null) {
             CORSConfiguration corsConfiguration = new CORSConfiguration(corsConfigDoc.isCorsConfigurationEnabled(),
                     corsConfigDoc.getAccessControlAllowOrigins(), corsConfigDoc.isAccessControlAllowCredentials(),
                     corsConfigDoc.getAccessControlAllowHeaders(), corsConfigDoc.getAccessControlAllowMethods());

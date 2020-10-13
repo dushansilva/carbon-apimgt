@@ -1795,15 +1795,11 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
         updateAPI(api);
     }
 
-    private void updateMongodbAPI(){
-
-    }
-
     private void updateApiArtifact(API api, boolean updateMetadata, boolean updatePermissions)
             throws APIManagementException {
 
         //mongodb
-
+        MongoDBPersistentDAO.getInstance().updateAPI(api);
         //Validate Transports
         validateAndSetTransports(api);
         validateAndSetAPISecurity(api);
