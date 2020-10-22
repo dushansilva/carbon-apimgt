@@ -48,7 +48,8 @@ public class MongoDBPersistenceUtil {
                 if (log.isDebugEnabled()) {
                     log.debug("Initializing mongodb datasource");
                 }
-                ConnectionString connectionString = new ConnectionString("");
+                ConnectionString connectionString = new ConnectionString("mongodb+srv://admin:admin@wso2-apim" +
+                        "-cluster.eowdj.azure.mongodb.net/test?retryWrites=true&w=majority");
 
                 ClassModel<MongoDBAPIDocument> mongoDBAPIDocument = ClassModel.builder(MongoDBAPIDocument.class)
                         .enableDiscriminator(true).build();

@@ -3,8 +3,10 @@ package org.wso2.carbon.apimgt.persistence;
 import com.mongodb.MongoException;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.model.FindOneAndReplaceOptions;
+import com.mongodb.client.model.FindOneAndUpdateOptions;
 import com.mongodb.client.model.InsertOneOptions;
 import com.mongodb.client.model.ReturnDocument;
+import com.mongodb.client.result.InsertOneResult;
 import org.apache.axiom.om.OMElement;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -17,6 +19,7 @@ import org.wso2.carbon.apimgt.api.model.*;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -50,6 +53,8 @@ import java.util.Set;
 
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Projections.include;
+import static com.mongodb.client.model.Updates.set;
 
 //? Question can api be part of multiple organizations
 public class MongoDBPersistenceImpl implements APIPersistence {
@@ -69,7 +74,7 @@ public class MongoDBPersistenceImpl implements APIPersistence {
                 throw new APIManagementException(msg);
             }
             return fromMongoDocToAPI(mongoDBAPIDocument);
-        } catch (MongoException e) {
+        } catch (Exception e) {
             throw new APIManagementException("Error when getting API from mongodb", e);
         }
     }
@@ -97,7 +102,9 @@ public class MongoDBPersistenceImpl implements APIPersistence {
             FindOneAndReplaceOptions options = new FindOneAndReplaceOptions();
             options.returnDocument(ReturnDocument.AFTER);
             options.upsert(true);
-            MongoDBAPIDocument createdDoc = collection.findOneAndReplace(null, mongoDBAPIDocument, options);
+            InsertOneResult insertOneResult = collection.insertOne(mongoDBAPIDocument);
+            MongoDBAPIDocument createdDoc = collection.find(eq("_id",
+                    insertOneResult.getInsertedId())).first();
             return fromMongoDocToAPI(createdDoc);
         } catch (APIManagementException e) {
             log.error("Error when creating api ", e);
@@ -114,16 +121,26 @@ public class MongoDBPersistenceImpl implements APIPersistence {
     @Override
     public Map<String, Object> searchPaginatedAPIs(String searchQuery, Organization requestedOrg, int start,
                                                    int end, boolean limitAttributes) {
-        String q = "context:df";
-        int s = 0;
-        int e = 8;
+//        String q = "context:df";
+//        int s = 0;
+//        int e = 8;
 
         MongoCollection<MongoDBAPIDocument> collection = getCollection();
         MongoCursor<MongoDBAPIDocument> aggregate = collection.aggregate(getSearchAggregate(searchQuery)).cursor();
+        Set<API> apis = new HashSet<>();
+        Map<String, Object> map = new HashMap<>();
         while (aggregate.hasNext()) {
             MongoDBAPIDocument mongoDBAPIDocument = aggregate.next();
-            System.out.println(mongoDBAPIDocument.getName());
+            try {
+                API api = fromMongoDocToAPI(mongoDBAPIDocument);
+                System.out.println(mongoDBAPIDocument.getName());
+                apis.add(api);
+            } catch (APIManagementException e) {
+                log.error("Error when converting API mongodb ", e);
+            }
         }
+        map.put("apis", apis);
+        return map;
 
 //        AggregateIterable<MongoDBAPIDocument> result = collection.aggregate(Arrays.asList(
 //                eq("$search",
@@ -150,7 +167,7 @@ public class MongoDBPersistenceImpl implements APIPersistence {
 //                                   ))),
 //                skip(1), limit(1)));
 
-        return null;
+//        return null;
     }
 
     private String getSearchQuery(String query) {
@@ -193,6 +210,39 @@ public class MongoDBPersistenceImpl implements APIPersistence {
         List<Document> list = new ArrayList<>();
         list.add(search);
         return list;
+    }
+
+    @Override
+    public void saveOASAPIDefinition(String apiId, String apiDefinitionJSON) {
+        MongoCollection<MongoDBAPIDocument> collection = getCollection();
+        try {
+            collection.updateOne(eq("_id", new ObjectId(apiId)), set("swaggerDefinition", apiDefinitionJSON));
+        } catch (Exception e) {
+            log.error("Error when updating swagger API mongodb ", e);
+        }
+    }
+
+    @Override
+    public String getOASDefinitionOfAPI(String apiOrProductId) {
+        MongoCollection<MongoDBAPIDocument> collection = getCollection();
+        try {
+            MongoDBAPIDocument api = collection.find(eq("_id", new ObjectId(apiOrProductId)))
+                    .projection(include("swaggerDefinition")).first();
+            return api.getSwaggerDefinition();
+        } catch (Exception e) {
+            log.error("Error when updating swagger in mongodb ", e);
+            return null;
+        }
+    }
+
+    @Override
+    public API getLightweightAPIByUUID(String uuid, String requestedOrg) {
+        try {
+            return getAPIbyId(uuid, requestedOrg);
+        } catch (APIManagementException e) {
+            log.error("Error when getting light weight API from mongodb ", e);
+            return null;
+        }
     }
 
     @Override
@@ -294,11 +344,6 @@ public class MongoDBPersistenceImpl implements APIPersistence {
     }
 
     @Override
-    public API getLightweightAPIByUUID(String uuid, String requestedOrg) {
-        return null;
-    }
-
-    @Override
     public Map<String, Object> getAPILifeCycleData(String apiId) {
         return null;
     }
@@ -367,16 +412,6 @@ public class MongoDBPersistenceImpl implements APIPersistence {
 
     @Override
     public void updateResourcePolicyFromResourceId(String apiId, String resourceId, String content) {
-
-    }
-
-    @Override
-    public String getOASDefinitionOfAPI(String apiOrProductId) {
-        return null;
-    }
-
-    @Override
-    public void saveOASAPIDefinition(String apiId, String apiDefinitionJSON) {
 
     }
 
