@@ -118,7 +118,11 @@ public class APIIdentifier implements Serializable, Identifier {
     public String getUUID() {
         return uuid;
     }
-    
+
+    public void setUuid(String uuid) {
+        this.uuid = uuid;
+    }
+
     @Override
     public int getId() {
         return id;
