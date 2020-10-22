@@ -133,7 +133,6 @@ public class MongoDBPersistenceImpl implements APIPersistence {
             MongoDBAPIDocument mongoDBAPIDocument = aggregate.next();
             try {
                 API api = fromMongoDocToAPI(mongoDBAPIDocument);
-                System.out.println(mongoDBAPIDocument.getName());
                 apis.add(api);
             } catch (APIManagementException e) {
                 log.error("Error when converting API mongodb ", e);
