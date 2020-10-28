@@ -99,9 +99,6 @@ public class MongoDBPersistenceImpl implements APIPersistence {
         MongoDBAPIDocument mongoDBAPIDocument = null;
         try {
             mongoDBAPIDocument = fromAPIToMongoDoc(api);
-            FindOneAndReplaceOptions options = new FindOneAndReplaceOptions();
-            options.returnDocument(ReturnDocument.AFTER);
-            options.upsert(true);
             InsertOneResult insertOneResult = collection.insertOne(mongoDBAPIDocument);
             MongoDBAPIDocument createdDoc = collection.find(eq("_id",
                     insertOneResult.getInsertedId())).first();
@@ -217,7 +214,7 @@ public class MongoDBPersistenceImpl implements APIPersistence {
         try {
             collection.updateOne(eq("_id", new ObjectId(apiId)), set("swaggerDefinition", apiDefinitionJSON));
         } catch (Exception e) {
-            log.error("Error when updating swagger API mongodb ", e);
+            log.error("Error when updating swagger in mongodb ", e);
         }
     }
 
@@ -229,7 +226,7 @@ public class MongoDBPersistenceImpl implements APIPersistence {
                     .projection(include("swaggerDefinition")).first();
             return api.getSwaggerDefinition();
         } catch (Exception e) {
-            log.error("Error when updating swagger in mongodb ", e);
+            log.error("Error when getting swagger in mongodb ", e);
             return null;
         }
     }
@@ -240,6 +237,31 @@ public class MongoDBPersistenceImpl implements APIPersistence {
             return getAPIbyId(uuid, requestedOrg);
         } catch (APIManagementException e) {
             log.error("Error when getting light weight API from mongodb ", e);
+            return null;
+        }
+    }
+
+    @Override
+    public void changeAPILifeCycle(String apiId, String status) {
+        MongoCollection<MongoDBAPIDocument> collection = getCollection();
+        try {
+            collection.updateOne(eq("_id", new ObjectId(apiId)), set("status", status));
+        } catch (Exception e) {
+            log.error("Error when updating api life cycle in mongodb ", e);
+        }
+    }
+
+    @Override
+    public Map<String, Object> getAPILifeCycleData(String apiId) {
+        MongoCollection<MongoDBAPIDocument> collection = getCollection();
+        try {
+            MongoDBAPIDocument mongoDBAPIDocument = collection.find(eq("_id", new ObjectId(apiId)))
+                    .projection(include("status")).first();
+            Map<String,Object> map = new HashMap<>();
+            map.put("status:",mongoDBAPIDocument.getStatus());
+            return map;
+        } catch (Exception e) {
+            log.error("Error when getting life cycle data from mongodb ", e);
             return null;
         }
     }
@@ -343,11 +365,6 @@ public class MongoDBPersistenceImpl implements APIPersistence {
     }
 
     @Override
-    public Map<String, Object> getAPILifeCycleData(String apiId) {
-        return null;
-    }
-
-    @Override
     public List<Mediation> getAllApiSpecificMediationPolicies(String apiId) {
         return null;
     }
@@ -428,11 +445,6 @@ public class MongoDBPersistenceImpl implements APIPersistence {
     @Override
     public ResourceFile getWSDL(String apiId) {
         return null;
-    }
-
-    @Override
-    public void changeAPILifeCycle(String apiId, String status) {
-
     }
 
     @Override
@@ -630,7 +642,7 @@ public class MongoDBPersistenceImpl implements APIPersistence {
         api.setWsdlUrl(mongoDBAPIDocument.getWsdlUrl());
         api.setWadlUrl(mongoDBAPIDocument.getWadlUrl());
         api.setThumbnailUrl(mongoDBAPIDocument.getThumbnailUrl());
-        api.setStatus(mongoDBAPIDocument.getStatus());
+        api.setStatus(mongoDBAPIDocument.getStatus().toUpperCase());
         api.setTechnicalOwner(mongoDBAPIDocument.getTechnicalOwner());
         api.setTechnicalOwnerEmail(mongoDBAPIDocument.getTechnicalOwnerEmail());
         api.setBusinessOwner(mongoDBAPIDocument.getBusinessOwner());
