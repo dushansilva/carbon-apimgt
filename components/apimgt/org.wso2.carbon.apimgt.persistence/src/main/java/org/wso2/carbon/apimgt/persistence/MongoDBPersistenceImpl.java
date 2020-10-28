@@ -638,6 +638,8 @@ public class MongoDBPersistenceImpl implements APIPersistence {
                 , mongoDBAPIDocument.getVersion());
         API api = new API(apiIdentifier);
         api.setUUID(mongoDBAPIDocument.getUuid().toString());
+        api.setAsDefaultVersion(mongoDBAPIDocument.isDefaultVersion());
+        api.setContext(mongoDBAPIDocument.getContext());
         api.setDescription(mongoDBAPIDocument.getDescription());
         api.setWsdlUrl(mongoDBAPIDocument.getWsdlUrl());
         api.setWadlUrl(mongoDBAPIDocument.getWadlUrl());
