@@ -89,7 +89,7 @@ public class ApisApiServiceImpl implements ApisApiService {
                 RestApiUtil.handleBadRequest("Provided tenant domain '" + xWSO2Tenant + "' is invalid",
                         ExceptionCodes.INVALID_TENANT.getErrorCode(), log);
             }
-            String newSearchQuery = APIUtil.constructNewSearchQuery(query);
+            String newSearchQuery = query;
 
             //revert content search back to normal search by name to avoid doc result complexity and to comply with REST api practices
             if (newSearchQuery.startsWith(APIConstants.CONTENT_SEARCH_TYPE_PREFIX + "=")) {
@@ -683,7 +683,9 @@ public class ApisApiServiceImpl implements ApisApiService {
             String apiSwagger = null;
             if (StringUtils.isNotEmpty(environmentName)) {
                 try {
-                    apiSwagger = apiConsumer.getOpenAPIDefinitionForEnvironment(api.getId(), environmentName);
+                    APIIdentifier identifier = api.getId();
+                    identifier.setUuid(apiId);
+                    apiSwagger = apiConsumer.getOpenAPIDefinitionForEnvironment(identifier, environmentName);
                 } catch (APIManagementException e) {
                     // handle gateway not found exception otherwise pass it
                     if (RestApiUtil.isDueToResourceNotFound(e)) {
@@ -993,8 +995,8 @@ public class ApisApiServiceImpl implements ApisApiService {
             String userName = RestApiUtil.getLoggedInUsername();
             apiConsumer.publishClickedAPI(api, userName);
 
-            if (APIConstants.PUBLISHED.equals(status) || APIConstants.PROTOTYPED.equals(status)
-                            || APIConstants.DEPRECATED.equals(status)) {
+            if (APIConstants.PUBLISHED.equalsIgnoreCase(status) || APIConstants.PROTOTYPED.equalsIgnoreCase(status)
+                            || APIConstants.DEPRECATED.equalsIgnoreCase(status)) {
                 return APIMappingUtil.fromAPItoDTO(api, requestedTenantDomain);
             } else {
                 RestApiUtil.handleAuthorizationFailure(RestApiConstants.RESOURCE_API, apiId, log);

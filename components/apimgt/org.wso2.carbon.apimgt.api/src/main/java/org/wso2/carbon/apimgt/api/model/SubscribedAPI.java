@@ -189,7 +189,11 @@ public class SubscribedAPI {
     public void setRequestedTier(Tier requestedTier) {
         this.requestedTier = requestedTier;
     }
-    
+
+    public void setApiId(APIIdentifier apiId) {
+        this.apiId = apiId;
+    }
+
     public Identifier getIdentifier() {
         if (apiId != null) {
             return apiId;

@@ -192,13 +192,14 @@ public class ApisApiServiceImpl implements ApisApiService {
         query = query == null ? "" : query;
         expand = expand != null && expand;
         try {
-            String newSearchQuery = APIUtil.constructApisGetQuery(query);
+            String newSearchQuery = query;
+//            String newSearchQuery = APIUtil.constructApisGetQuery(query);
 
             //revert content search back to normal search by name to avoid doc result complexity and to comply with REST api practices
-            if (newSearchQuery.startsWith(APIConstants.CONTENT_SEARCH_TYPE_PREFIX + "=")) {
-                newSearchQuery = newSearchQuery
-                        .replace(APIConstants.CONTENT_SEARCH_TYPE_PREFIX + "=", APIConstants.NAME_TYPE_PREFIX + "=");
-            }
+//            if (newSearchQuery.startsWith(APIConstants.CONTENT_SEARCH_TYPE_PREFIX + "=")) {
+//                newSearchQuery = newSearchQuery
+//                        .replace(APIConstants.CONTENT_SEARCH_TYPE_PREFIX + "=", APIConstants.NAME_TYPE_PREFIX + "=");
+//            }
 
             APIProvider apiProvider = RestApiUtil.getLoggedInUserProvider();
 
@@ -295,7 +296,7 @@ public class ApisApiServiceImpl implements ApisApiService {
                 }
                 SwaggerData swaggerData = new SwaggerData(apiToAdd);
                 String apiDefinition = oasParser.generateAPIDefinition(swaggerData);
-                apiProvider.saveSwaggerDefinition(apiToAdd, apiDefinition);
+                apiProvider.saveSwaggerDefinition(createdAPI, apiDefinition);
             }
 
 //            APIIdentifier createdApiId = apiToAdd.getId();
@@ -2276,6 +2277,7 @@ public class ApisApiServiceImpl implements ApisApiService {
             } else {
                 apiIdentifier = identifier;
             }
+            apiIdentifier.setUuid(apiId);
             Map<String, Object> apiLCData = apiProvider.getAPILifeCycleData(apiIdentifier);
             if (apiLCData == null) {
                 String errorMessage = "Error while getting lifecycle state for API : " + apiId;
@@ -2284,17 +2286,17 @@ public class ApisApiServiceImpl implements ApisApiService {
 
             boolean apiOlderVersionExist = false;
             // check whether other versions of the current API exists
-            APIDTO currentAPI = getAPIByID(apiId);
-            APIVersionStringComparator comparator = new APIVersionStringComparator();
-            Set<String> versions = apiProvider.getAPIVersions(
-                    APIUtil.replaceEmailDomain(apiIdentifier.getProviderName()), apiIdentifier.getName());
-
-            for (String tempVersion : versions) {
-                if (comparator.compare(tempVersion, apiIdentifier.getVersion()) < 0) {
-                    apiOlderVersionExist = true;
-                    break;
-                }
-            }
+//            APIDTO currentAPI = getAPIByID(apiId);
+//            APIVersionStringComparator comparator = new APIVersionStringComparator();
+//            Set<String> versions = apiProvider.getAPIVersions(
+//                    APIUtil.replaceEmailDomain(apiIdentifier.getProviderName()), apiIdentifier.getName());
+//
+//            for (String tempVersion : versions) {
+//                if (comparator.compare(tempVersion, apiIdentifier.getVersion()) < 0) {
+//                    apiOlderVersionExist = true;
+//                    break;
+//                }
+//            }
 
             return APIMappingUtil.fromLifecycleModelToDTO(apiLCData, apiOlderVersionExist);
         } catch (APIManagementException e) {
@@ -3063,6 +3065,7 @@ public class ApisApiServiceImpl implements ApisApiService {
             String tenantDomain = RestApiUtil.getLoggedInUserTenantDomain();
             //this will fail if user does not have access to the API or the API does not exist
             APIIdentifier apiIdentifier = APIMappingUtil.getAPIIdentifierFromUUID(apiId, tenantDomain);
+            apiIdentifier.setUuid(apiId);
             String apiSwagger = apiProvider.getOpenAPIDefinition(apiIdentifier);
             APIDefinition parser = OASParserUtil.getOASParser(apiSwagger);
             API api = apiProvider.getAPIbyUUID(apiId, tenantDomain);
@@ -3215,7 +3218,9 @@ public class ApisApiServiceImpl implements ApisApiService {
         //Update API is called to update URITemplates and scopes of the API
         SwaggerData swaggerData = new SwaggerData(existingAPI);
         String updatedApiDefinition = oasParser.populateCustomManagementInfo(apiDefinition, swaggerData);
-        apiProvider.saveSwagger20Definition(existingAPI.getId(), updatedApiDefinition);
+        APIIdentifier id = existingAPI.getId();
+        id.setUuid(existingAPI.getUUID());
+        apiProvider.saveSwagger20Definition(id, updatedApiDefinition);
         apiProvider.updateAPI(existingAPI);
         //retrieves the updated swagger definition
         String apiSwagger = apiProvider.getOpenAPIDefinition(existingAPI.getId());
@@ -3910,6 +3915,7 @@ public class ApisApiServiceImpl implements ApisApiService {
             APIProvider apiProvider = RestApiUtil.getLoggedInUserProvider();
             String tenantDomain = RestApiUtil.getLoggedInUserTenantDomain();
             APIIdentifier apiIdentifier = APIMappingUtil.getAPIIdentifierFromUUID(apiId, tenantDomain);
+            apiIdentifier.setUuid(apiId);
             Map<String, Object> apiLCData = apiProvider.getAPILifeCycleData(apiIdentifier);
             String[] nextAllowedStates = (String[]) apiLCData.get(APIConstants.LC_NEXT_STATES);
             if (!ArrayUtils.contains(nextAllowedStates, action)) {

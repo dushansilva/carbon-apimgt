@@ -90,7 +90,7 @@ public class SubscriptionMappingUtil {
      * @return SubscriptionListDTO object containing SubscriptionDTOs
      */
     public static SubscriptionListDTO fromSubscriptionListToDTO(List<SubscribedAPI> subscriptions, Integer limit,
-            Integer offset) throws APIManagementException {
+            Integer offset,String apiId) throws APIManagementException {
 
         SubscriptionListDTO subscriptionListDTO = new SubscriptionListDTO();
         List<SubscriptionDTO> subscriptionDTOs = subscriptionListDTO.getList();
@@ -101,6 +101,9 @@ public class SubscriptionMappingUtil {
 
         for (SubscribedAPI subscription : subscriptions) {
             try {
+                APIIdentifier identifier = subscription.getApiId();
+                identifier.setUuid(apiId);
+                subscription.setApiId(identifier);
                 subscriptionDTOs.add(fromSubscriptionToDTO(subscription));
             } catch (APIManagementException e) {
                 log.error("Error while obtaining api metadata", e);

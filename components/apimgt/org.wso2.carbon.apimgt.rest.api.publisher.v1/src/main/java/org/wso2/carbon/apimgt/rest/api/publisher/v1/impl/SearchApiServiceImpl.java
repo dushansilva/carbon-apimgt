@@ -65,7 +65,7 @@ public class SearchApiServiceImpl implements SearchApiService {
             if (!query.contains(":")) {
                 query = (APIConstants.CONTENT_SEARCH_TYPE_PREFIX + ":" + query);
             }
-            String newSearchQuery = APIUtil.constructNewSearchQuery(query);
+            String newSearchQuery = query;
             APIProvider apiProvider = RestApiUtil.getLoggedInUserProvider();
 
             String username = RestApiUtil.getLoggedInUsername();

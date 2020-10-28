@@ -143,7 +143,7 @@ public class UserAwareAPIConsumer extends APIConsumerImpl {
         } else {
             identifier = apiTypeWrapper.getApi().getId();
         }
-        checkAccessControlPermission(identifier);
+//        checkAccessControlPermission(identifier);
         return apiTypeWrapper;
     }
 

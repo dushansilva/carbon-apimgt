@@ -120,7 +120,7 @@ public class SubscriptionsApiServiceImpl implements SubscriptionsApiService {
                 subscribedAPIList.sort(Comparator.comparing(o -> o.getApplication().getName()));
 
                 subscriptionListDTO = SubscriptionMappingUtil
-                        .fromSubscriptionListToDTO(subscribedAPIList, limit, offset);
+                        .fromSubscriptionListToDTO(subscribedAPIList, limit, offset, apiId);
 
                 return Response.ok().entity(subscriptionListDTO).build();
             } else if (!StringUtils.isEmpty(applicationId)) {
@@ -140,7 +140,7 @@ public class SubscriptionsApiServiceImpl implements SubscriptionsApiService {
                 subscribedAPIList.addAll(subscriptions);
 
                 subscriptionListDTO = SubscriptionMappingUtil.fromSubscriptionListToDTO(subscribedAPIList, limit,
-                        offset);
+                        offset, apiId);
                 return Response.ok().entity(subscriptionListDTO).build();
 
             } else {
@@ -220,6 +220,9 @@ public class SubscriptionsApiServiceImpl implements SubscriptionsApiService {
                     .addSubscription(apiTypeWrapper, username, application.getId());
             SubscribedAPI addedSubscribedAPI = apiConsumer
                     .getSubscriptionByUUID(subscriptionResponse.getSubscriptionUUID());
+            APIIdentifier apiId = addedSubscribedAPI.getApiId();
+            apiId.setUuid(body.getApiId());
+            addedSubscribedAPI.setApiId(apiId);
             SubscriptionDTO addedSubscriptionDTO = SubscriptionMappingUtil.fromSubscriptionToDTO(addedSubscribedAPI);
             WorkflowResponse workflowResponse = subscriptionResponse.getWorkflowResponse();
             if (workflowResponse instanceof HttpWorkflowResponse) {
