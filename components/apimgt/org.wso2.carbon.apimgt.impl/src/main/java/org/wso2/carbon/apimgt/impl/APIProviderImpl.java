@@ -1424,6 +1424,7 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
 //            List<APIProductResource> productResources = apiMgtDAO.getProductMappingsForAPI(api);
             //DAO API Update
             updateAPI(api, tenantId, userNameWithoutChange);
+            apiPersistenceInstance.updateApi(api);
 //            updateProductResourceMappings(api, productResources);
 
             if (log.isDebugEnabled()) {

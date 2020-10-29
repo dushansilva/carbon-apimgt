@@ -898,6 +898,7 @@ public class ApisApiServiceImpl implements ApisApiService {
                 SwaggerData swaggerData = new SwaggerData(apiToUpdate);
                 String newDefinition = apiDefinition.generateAPIDefinition(swaggerData, oldDefinition);
                 apiProvider.saveSwaggerDefinition(apiToUpdate, newDefinition);
+                apiToUpdate.setSwaggerDefinition(newDefinition);
                 if (!isGraphql) {
                     apiToUpdate.setUriTemplates(apiDefinition.getURITemplates(newDefinition));
                 }
@@ -3224,6 +3225,7 @@ public class ApisApiServiceImpl implements ApisApiService {
         APIIdentifier id = existingAPI.getId();
         id.setUuid(existingAPI.getUUID());
         apiProvider.saveSwagger20Definition(id, updatedApiDefinition);
+        existingAPI.setSwaggerDefinition(updatedApiDefinition);
         apiProvider.updateAPI(existingAPI);
         //retrieves the updated swagger definition
         String apiSwagger = apiProvider.getOpenAPIDefinition(id);
