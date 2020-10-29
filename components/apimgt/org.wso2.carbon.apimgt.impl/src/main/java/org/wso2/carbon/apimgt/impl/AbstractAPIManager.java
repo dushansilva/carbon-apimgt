@@ -417,52 +417,57 @@ public abstract class AbstractAPIManager implements APIManager {
     }
 
     public API getAPI(APIIdentifier identifier) throws APIManagementException {
-        String apiPath = APIUtil.getAPIPath(identifier);
-        Registry registry;
-        try {
-            String apiTenantDomain = getTenantDomain(identifier);
-            int apiTenantId = getTenantManager()
-                    .getTenantId(apiTenantDomain);
-            if (!MultitenantConstants.SUPER_TENANT_DOMAIN_NAME.equals(apiTenantDomain)) {
-                APIUtil.loadTenantRegistry(apiTenantId);
-            }
-
-            if (this.tenantDomain == null || !this.tenantDomain.equals(apiTenantDomain)) { //cross tenant scenario
-                registry = getRegistryService().getGovernanceUserRegistry(
-                        getTenantAwareUsername(APIUtil.replaceEmailDomainBack(identifier.getProviderName())), apiTenantId);
-            } else {
-                registry = this.registry;
-            }
-            GenericArtifactManager artifactManager = getAPIGenericArtifactManagerFromUtil(registry,
-                    APIConstants.API_KEY);
-            Resource apiResource = registry.get(apiPath);
-            String artifactId = apiResource.getUUID();
-            if (artifactId == null) {
-                throw new APIManagementException("artifact id is null for : " + apiPath);
-            }
-            GenericArtifact apiArtifact = artifactManager.getGenericArtifact(artifactId);
-
-            API api = APIUtil.getAPIForPublishing(apiArtifact, registry);
-            APIUtil.updateAPIProductDependencies(api, registry); //USE REG >> NO functionality ATM
-
-            //check for API visibility
-            if (APIConstants.API_GLOBAL_VISIBILITY.equals(api.getVisibility())) { //global api
-                return api;
-            }
-            if (this.tenantDomain == null || !this.tenantDomain.equals(apiTenantDomain)) {
-                throw new APIManagementException("User " + username + " does not have permission to view API : "
-                        + api.getId().getApiName());
-            }
-
-            return api;
-
-        } catch (RegistryException e) {
-            String msg = "Failed to get API from : " + apiPath;
-            throw new APIManagementException(msg, e);
-        } catch (org.wso2.carbon.user.api.UserStoreException e) {
-            String msg = "Failed to get API from : " + apiPath;
-            throw new APIManagementException(msg, e);
-        }
+        API api = apiPersistenceInstance.getLightweightAPIByUUID(identifier.getUUID(), "");
+        api = addTiersToAPI(api, "carbon.super");
+        Map<String, Scope> scopeToKeyMapping = APIUtil.getAPIScopes(api.getId(), "carbon.super");
+        api.setScopes(new LinkedHashSet<>(scopeToKeyMapping.values()));
+        return api;
+//        String apiPath = APIUtil.getAPIPath(identifier);
+//        Registry registry;
+//        try {
+//            String apiTenantDomain = getTenantDomain(identifier);
+//            int apiTenantId = getTenantManager()
+//                    .getTenantId(apiTenantDomain);
+//            if (!MultitenantConstants.SUPER_TENANT_DOMAIN_NAME.equals(apiTenantDomain)) {
+//                APIUtil.loadTenantRegistry(apiTenantId);
+//            }
+//
+//            if (this.tenantDomain == null || !this.tenantDomain.equals(apiTenantDomain)) { //cross tenant scenario
+//                registry = getRegistryService().getGovernanceUserRegistry(
+//                        getTenantAwareUsername(APIUtil.replaceEmailDomainBack(identifier.getProviderName())), apiTenantId);
+//            } else {
+//                registry = this.registry;
+//            }
+//            GenericArtifactManager artifactManager = getAPIGenericArtifactManagerFromUtil(registry,
+//                    APIConstants.API_KEY);
+//            Resource apiResource = registry.get(apiPath);
+//            String artifactId = apiResource.getUUID();
+//            if (artifactId == null) {
+//                throw new APIManagementException("artifact id is null for : " + apiPath);
+//            }
+//            GenericArtifact apiArtifact = artifactManager.getGenericArtifact(artifactId);
+//
+//            API api = APIUtil.getAPIForPublishing(apiArtifact, registry);
+//            APIUtil.updateAPIProductDependencies(api, registry); //USE REG >> NO functionality ATM
+//
+//            //check for API visibility
+//            if (APIConstants.API_GLOBAL_VISIBILITY.equals(api.getVisibility())) { //global api
+//                return api;
+//            }
+//            if (this.tenantDomain == null || !this.tenantDomain.equals(apiTenantDomain)) {
+//                throw new APIManagementException("User " + username + " does not have permission to view API : "
+//                        + api.getId().getApiName());
+//            }
+//
+//            return api;
+//
+//        } catch (RegistryException e) {
+//            String msg = "Failed to get API from : " + apiPath;
+//            throw new APIManagementException(msg, e);
+//        } catch (org.wso2.carbon.user.api.UserStoreException e) {
+//            String msg = "Failed to get API from : " + apiPath;
+//            throw new APIManagementException(msg, e);
+//        }
     }
 
     protected String getTenantAwareUsername(String username) {
@@ -2187,16 +2192,16 @@ public abstract class AbstractAPIManager implements APIManager {
         } catch (org.wso2.carbon.user.api.UserStoreException e) {
             log.error("Error when getting tiers");
         }
-        Set<Tier> apiSet = (Set) map.get("apis");
-        API api = (API) apiSet.toArray()[0];
-
-        api = addTiersToAPI(api, requestedTenantDomain);
-        Map<String, Scope> scopeToKeyMapping = APIUtil.getAPIScopes(api.getId(), requestedTenantDomain);
-        api.setScopes(new LinkedHashSet<>(scopeToKeyMapping.values()));
-
-
+        Set<API> apiSet = (Set) map.get("apis");
+//        API api = (API) apiSet.toArray()[0];
         Set<API> apis = new HashSet<>();
-        apis.add(api);
+        for (API api : apiSet) {
+            api = addTiersToAPI(api, requestedTenantDomain);
+            Map<String, Scope> scopeToKeyMapping = APIUtil.getAPIScopes(api.getId(), requestedTenantDomain);
+            api.setScopes(new LinkedHashSet<>(scopeToKeyMapping.values()));
+            apis.add(api);
+        }
+
         Map<String, Object> result = new HashMap<>();
         result.put("apis",apis);
 

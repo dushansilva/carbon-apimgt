@@ -58,7 +58,7 @@ public class MongoDBPersistenceUtil {
                     log.debug("Initializing mongodb datasource");
                 }
 
-                if(tomlParseResult == null){
+                if (tomlParseResult == null) {
                     Path source = Paths.get(CarbonUtils.getCarbonConfigDirPath() + File.separator + "deployment.toml");
                     try {
                         tomlParseResult = Toml.parse(source);

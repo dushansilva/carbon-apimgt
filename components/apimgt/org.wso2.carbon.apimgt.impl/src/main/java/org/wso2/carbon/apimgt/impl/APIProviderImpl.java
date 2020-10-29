@@ -1400,7 +1400,7 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
 //                updatePermissions = true;
 //            }
 
-//            updateEndpointSecurity(oldApi, api);
+            updateEndpointSecurity(oldApi, api);
 
 //            updateApiArtifact(api, true, updatePermissions);
 //            if (!oldApi.getContext().equals(api.getContext())) {
@@ -1455,7 +1455,8 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
                     isAPIPublished = isAPIPublished(api);
                     if (gatewayExists) {
                         if (isAPIPublished) {
-                            API apiPublished = apiPersistenceInstance.getAPIbyId(oldApi.getUUID(),"");
+                            API apiPublished = api;
+//                            API apiPublished = apiPersistenceInstance.getAPIbyId(oldApi.getUUID(),"");
                             apiPublished.setAsDefaultVersion(api.isDefaultVersion());
 //                            if (api.getId().getVersion().equals(previousDefaultVersion) && !api.isDefaultVersion()) {
 //                                // default version tick has been removed so a default api for current should not be
@@ -1480,13 +1481,18 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
                             Set<String> environmentsToPublish = new HashSet<String>(apiPublished.getEnvironments());
                             List<Label> labelsToPublish;
                             List<Label> labelsRemoved = null;
-                            if (apiPublished.getGatewayLabels() != null ){
+                            if (apiPublished.getGatewayLabels() != null){
                                 labelsToPublish = new ArrayList<>(apiPublished.getGatewayLabels());
-                                labelsRemoved = new ArrayList<>(oldApi.getGatewayLabels());
                             } else {
                                 labelsToPublish = new ArrayList<>();
+                            }
+
+                            if (oldApi.getGatewayLabels() != null){
+                                labelsRemoved = new ArrayList<>(oldApi.getGatewayLabels());
+                            } else {
                                 labelsRemoved = new ArrayList<>();
                             }
+
                             Set<String> environmentsRemoved = new HashSet<String>(oldApi.getEnvironments());
 
                             if (!environmentsToPublish.isEmpty() && !environmentsToRemove.isEmpty()) {
@@ -1514,7 +1520,8 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
                             environmentsToPublish.addAll(failedToRemoveEnvironments.keySet());
                             apiPublished.setEnvironments(environmentsToPublish);
                             apiPublished.setGatewayLabels(labelsToPublish);
-                            updateApiArtifact(apiPublished, true, false);
+//                            updateApiArtifact(apiPublished, true, false);
+                            apiPersistenceInstance.updateApi(apiPublished);
                             failedGateways.clear();
                             failedGateways.put("UNPUBLISHED", failedToRemoveEnvironments);
                             failedGateways.put("PUBLISHED", failedToPublishEnvironments);
@@ -1799,8 +1806,8 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
 
     @Override
     public void manageAPI(API api) throws APIManagementException, FaultGatewaysException {
-//        updateAPI(api);
-        apiPersistenceInstance.updateApi(api);
+        updateAPI(api);
+//        apiPersistenceInstance.updateApi(api);
     }
 
     // HAS REGISTRY USAGE
@@ -5744,7 +5751,7 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
                 // apiWFState is null when simple wf executor is used because wf state is not stored in the db.
                 if (WorkflowStatus.APPROVED.equals(apiWFState) || apiWFState == null) {
                     if ("Publish".equalsIgnoreCase(action)) {
-                        targetStatus = "Published";
+                        targetStatus = "PUBLISHED";
                     }
 //                    apiArtifact.invokeAction(action, APIConstants.API_LIFE_CYCLE);
 //                    targetStatus = apiArtifact.getLifecycleState();
@@ -5948,7 +5955,7 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
     * @return Map<String,Object> a map with lifecycle data
     */
     public Map<String, Object> getAPILifeCycleData(APIIdentifier apiId) throws APIManagementException {
-        String path = APIUtil.getAPIPath(apiId);
+//        String path = APIUtil.getAPIPath(apiId);
         Map<String, Object> lcData = new HashMap<String, Object>();
 
 
@@ -5979,7 +5986,7 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
 //            String lifeCycleState = artifact.getLifecycleState();
             Map<String, Object> apiLifeCycleData = apiPersistenceInstance.getAPILifeCycleData(apiId.getUUID());
             String lifeCycleState = apiLifeCycleData.get("status:").toString();
-            lcData.putAll(apiLifeCycleData);
+//            lcData.putAll(apiLifeCycleData);
 
             List<String> actions = new ArrayList();
 
@@ -5990,88 +5997,90 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
                 actions.add("Demote to Created") ;
                 actions.add("Publish") ;
                 actions.add("Block") ;
+                lcData.put("status:","Published");
             }
 
             if (APIConstants.CREATED.equalsIgnoreCase(lifeCycleState)) {
                 actions.add("Publish") ;
                 actions.add("Deploy as a Prototype") ;
+                lcData.put("status:","Created");
             }
 
             lcData.put(APIConstants.LC_NEXT_STATES, actions.toArray(new String[0]));
 //            lcData.put(APIConstants.LC_STATUS, );
 
-            LifecycleBean bean;
-            bean = LifecycleBeanPopulator.getLifecycleBean(path, (UserRegistry) registry, configRegistry);
-            if (bean != null) {
-                ArrayList<CheckListItem> checkListItems = new ArrayList<CheckListItem>();
-                ArrayList<String> permissionList = new ArrayList<String>();
-                //Get lc properties
-                Property[] lifecycleProps = bean.getLifecycleProperties();
-                //Get roles of the current session holder
-                String[] roleNames = bean.getRolesOfUser();
-                for (Property property : lifecycleProps) {
-                    String propName = property.getKey();
-                    String[] propValues = property.getValues();
-                    //Check for permission properties if any exists
-                    if (propValues != null && propValues.length != 0) {
-                        if (propName.startsWith(APIConstants.LC_PROPERTY_CHECKLIST_PREFIX) &&
-                                propName.endsWith(APIConstants.LC_PROPERTY_PERMISSION_SUFFIX) &&
-                                propName.contains(APIConstants.API_LIFE_CYCLE)) {
-                            for (String role : roleNames) {
-                                for (String propValue : propValues) {
-                                    String key = propName.replace(APIConstants.LC_PROPERTY_CHECKLIST_PREFIX, "")
-                                            .replace(APIConstants.LC_PROPERTY_PERMISSION_SUFFIX, "");
-                                    if (propValue.equals(role)) {
-                                        permissionList.add(key);
-                                    } else if (propValue.startsWith(APIConstants.LC_PROPERTY_CHECKLIST_PREFIX) &&
-                                            propValue.endsWith(APIConstants.LC_PROPERTY_PERMISSION_SUFFIX)) {
-                                        permissionList.add(key);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                //Check for lifecycle checklist item properties defined
-                for (Property property : lifecycleProps) {
-                    String propName = property.getKey();
-                    String[] propValues = property.getValues();
-
-                    if (propValues != null && propValues.length != 0) {
-
-                        CheckListItem checkListItem = new CheckListItem();
-                        checkListItem.setVisible("false");
-                        if (propName.startsWith(APIConstants.LC_PROPERTY_CHECKLIST_PREFIX) &&
-                                propName.endsWith(APIConstants.LC_PROPERTY_ITEM_SUFFIX) &&
-                                propName.contains(APIConstants.API_LIFE_CYCLE)) {
-                            if (propValues.length > 2) {
-                                for (String param : propValues) {
-                                    if (param.startsWith(APIConstants.LC_STATUS)) {
-                                        checkListItem.setLifeCycleStatus(param.substring(7));
-                                    } else if (param.startsWith(APIConstants.LC_CHECK_ITEM_NAME)) {
-                                        checkListItem.setName(param.substring(5));
-                                    } else if (param.startsWith(APIConstants.LC_CHECK_ITEM_VALUE)) {
-                                        checkListItem.setValue(param.substring(6));
-                                    } else if (param.startsWith(APIConstants.LC_CHECK_ITEM_ORDER)) {
-                                        checkListItem.setOrder(param.substring(6));
-                                    }
-                                }
-                            }
-
-                            String key = propName.replace(APIConstants.LC_PROPERTY_CHECKLIST_PREFIX, "").
-                                    replace(APIConstants.LC_PROPERTY_ITEM_SUFFIX, "");
-                            if (permissionList.contains(key)) { //Set visible to true if the checklist item permits
-                                checkListItem.setVisible("true");
-                            }
-                        }
-
-                        if (checkListItem.matchLifeCycleStatus(lifeCycleState)) {
-                            checkListItems.add(checkListItem);
-                        }
-                    }
-                }
-                lcData.put("items", checkListItems);
-            }
+//            LifecycleBean bean;
+//            bean = LifecycleBeanPopulator.getLifecycleBean(path, (UserRegistry) registry, configRegistry);
+//            if (bean != null) {
+//                ArrayList<CheckListItem> checkListItems = new ArrayList<CheckListItem>();
+//                ArrayList<String> permissionList = new ArrayList<String>();
+//                //Get lc properties
+//                Property[] lifecycleProps = bean.getLifecycleProperties();
+//                //Get roles of the current session holder
+//                String[] roleNames = bean.getRolesOfUser();
+//                for (Property property : lifecycleProps) {
+//                    String propName = property.getKey();
+//                    String[] propValues = property.getValues();
+//                    //Check for permission properties if any exists
+//                    if (propValues != null && propValues.length != 0) {
+//                        if (propName.startsWith(APIConstants.LC_PROPERTY_CHECKLIST_PREFIX) &&
+//                                propName.endsWith(APIConstants.LC_PROPERTY_PERMISSION_SUFFIX) &&
+//                                propName.contains(APIConstants.API_LIFE_CYCLE)) {
+//                            for (String role : roleNames) {
+//                                for (String propValue : propValues) {
+//                                    String key = propName.replace(APIConstants.LC_PROPERTY_CHECKLIST_PREFIX, "")
+//                                            .replace(APIConstants.LC_PROPERTY_PERMISSION_SUFFIX, "");
+//                                    if (propValue.equals(role)) {
+//                                        permissionList.add(key);
+//                                    } else if (propValue.startsWith(APIConstants.LC_PROPERTY_CHECKLIST_PREFIX) &&
+//                                            propValue.endsWith(APIConstants.LC_PROPERTY_PERMISSION_SUFFIX)) {
+//                                        permissionList.add(key);
+//                                    }
+//                                }
+//                            }
+//                        }
+//                    }
+//                }
+//                //Check for lifecycle checklist item properties defined
+//                for (Property property : lifecycleProps) {
+//                    String propName = property.getKey();
+//                    String[] propValues = property.getValues();
+//
+//                    if (propValues != null && propValues.length != 0) {
+//
+//                        CheckListItem checkListItem = new CheckListItem();
+//                        checkListItem.setVisible("false");
+//                        if (propName.startsWith(APIConstants.LC_PROPERTY_CHECKLIST_PREFIX) &&
+//                                propName.endsWith(APIConstants.LC_PROPERTY_ITEM_SUFFIX) &&
+//                                propName.contains(APIConstants.API_LIFE_CYCLE)) {
+//                            if (propValues.length > 2) {
+//                                for (String param : propValues) {
+//                                    if (param.startsWith(APIConstants.LC_STATUS)) {
+//                                        checkListItem.setLifeCycleStatus(param.substring(7));
+//                                    } else if (param.startsWith(APIConstants.LC_CHECK_ITEM_NAME)) {
+//                                        checkListItem.setName(param.substring(5));
+//                                    } else if (param.startsWith(APIConstants.LC_CHECK_ITEM_VALUE)) {
+//                                        checkListItem.setValue(param.substring(6));
+//                                    } else if (param.startsWith(APIConstants.LC_CHECK_ITEM_ORDER)) {
+//                                        checkListItem.setOrder(param.substring(6));
+//                                    }
+//                                }
+//                            }
+//
+//                            String key = propName.replace(APIConstants.LC_PROPERTY_CHECKLIST_PREFIX, "").
+//                                    replace(APIConstants.LC_PROPERTY_ITEM_SUFFIX, "");
+//                            if (permissionList.contains(key)) { //Set visible to true if the checklist item permits
+//                                checkListItem.setVisible("true");
+//                            }
+//                        }
+//
+//                        if (checkListItem.matchLifeCycleStatus(lifeCycleState)) {
+//                            checkListItems.add(checkListItem);
+//                        }
+//                    }
+//                }
+//                lcData.put("items", checkListItems);
+//            }
         } catch (Exception e) {
             handleException(e.getMessage(), e);
         } finally {

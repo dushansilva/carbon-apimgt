@@ -257,8 +257,8 @@ public class MongoDBPersistenceImpl implements APIPersistence {
         try {
             MongoDBAPIDocument mongoDBAPIDocument = collection.find(eq("_id", new ObjectId(apiId)))
                     .projection(include("status")).first();
-            Map<String,Object> map = new HashMap<>();
-            map.put("status:",mongoDBAPIDocument.getStatus());
+            Map<String, Object> map = new HashMap<>();
+            map.put("status:", mongoDBAPIDocument.getStatus());
             return map;
         } catch (Exception e) {
             log.error("Error when getting life cycle data from mongodb ", e);

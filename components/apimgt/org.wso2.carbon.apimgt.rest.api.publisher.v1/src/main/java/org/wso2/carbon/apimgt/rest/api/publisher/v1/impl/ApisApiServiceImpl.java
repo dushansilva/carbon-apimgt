@@ -659,6 +659,7 @@ public class ApisApiServiceImpl implements ApisApiService {
             APIProvider apiProvider = RestApiUtil.getProvider(username);
             API originalAPI = apiProvider.getAPIbyUUID(apiId, tenantDomain);
             APIIdentifier apiIdentifier = originalAPI.getId();
+            apiIdentifier.setUuid(apiId);
             boolean isWSAPI = originalAPI.getType() != null
                     && APIConstants.APITransportType.WS.toString().equals(originalAPI.getType());
             boolean isGraphql = originalAPI.getType() != null
@@ -889,7 +890,7 @@ public class ApisApiServiceImpl implements ApisApiService {
             assignLabelsToDTO(body, apiToUpdate);
 
             //preserve monetization status in the update flow
-            apiProvider.configureMonetizationInAPIArtifact(originalAPI);
+//            apiProvider.configureMonetizationInAPIArtifact(originalAPI);
 
             if (!isWSAPI) {
                 String oldDefinition = apiProvider.getOpenAPIDefinition(apiIdentifier);
@@ -911,6 +912,7 @@ public class ApisApiServiceImpl implements ApisApiService {
                 }
             }
 
+            apiToUpdate.setStatus(apiToUpdate.getStatus().toUpperCase());
             apiProvider.manageAPI(apiToUpdate);
 
             API updatedApi = apiProvider.getAPI(apiIdentifier);
@@ -3105,6 +3107,7 @@ public class ApisApiServiceImpl implements ApisApiService {
             String updatedSwagger;
             String tenantDomain = RestApiUtil.getLoggedInUserTenantDomain();
             APIIdentifier apiIdentifier = APIMappingUtil.getAPIIdentifierFromUUID(apiId, tenantDomain);
+            apiIdentifier.setUuid(apiId);
             boolean isSoapToRestConvertedAPI = SOAPOperationBindingUtils.isSOAPToRESTApi(apiIdentifier.getApiName(),
                     apiIdentifier.getVersion(), apiIdentifier.getProviderName());
             //Handle URL and file based definition imports
@@ -3223,7 +3226,7 @@ public class ApisApiServiceImpl implements ApisApiService {
         apiProvider.saveSwagger20Definition(id, updatedApiDefinition);
         apiProvider.updateAPI(existingAPI);
         //retrieves the updated swagger definition
-        String apiSwagger = apiProvider.getOpenAPIDefinition(existingAPI.getId());
+        String apiSwagger = apiProvider.getOpenAPIDefinition(id);
         return oasParser.getOASDefinitionForPublisher(existingAPI, apiSwagger);
     }
 
