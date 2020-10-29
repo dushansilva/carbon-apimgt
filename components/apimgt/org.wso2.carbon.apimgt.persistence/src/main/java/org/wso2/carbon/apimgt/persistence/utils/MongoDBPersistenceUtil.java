@@ -5,6 +5,8 @@ import com.mongodb.MongoClientSettings;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
+import net.consensys.cava.toml.Toml;
+import net.consensys.cava.toml.TomlParseResult;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.bson.Document;
@@ -26,6 +28,12 @@ import org.wso2.carbon.apimgt.persistence.documents.MongoDBAPIDocument;
 import org.wso2.carbon.apimgt.persistence.documents.OrganizationDocument;
 import org.wso2.carbon.apimgt.persistence.documents.TiersDocument;
 import org.wso2.carbon.apimgt.persistence.documents.URITemplateDocument;
+import org.wso2.carbon.utils.CarbonUtils;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
@@ -34,6 +42,7 @@ public class MongoDBPersistenceUtil {
 
     private static final Log log = LogFactory.getLog(MongoDBPersistenceUtil.class);
     private static MongoClient mongoClient = null;
+    private static TomlParseResult tomlParseResult = null;
 
     /**
      * Initializes the datasource for mongodb
@@ -48,7 +57,19 @@ public class MongoDBPersistenceUtil {
                 if (log.isDebugEnabled()) {
                     log.debug("Initializing mongodb datasource");
                 }
-                ConnectionString connectionString = new ConnectionString("");
+
+                if(tomlParseResult == null){
+                    Path source = Paths.get(CarbonUtils.getCarbonConfigDirPath() + File.separator + "deployment.toml");
+                    try {
+                        tomlParseResult = Toml.parse(source);
+                    } catch (IOException e) {
+                        log.error("error when parsing toml ");
+                    }
+                }
+
+                String parsedConnectionString = tomlParseResult.getString("database.reg_db.connectionString");
+                log.info("mongodb connection string" + parsedConnectionString);
+                ConnectionString connectionString = new ConnectionString(parsedConnectionString);
 
                 ClassModel<MongoDBAPIDocument> mongoDBAPIDocument = ClassModel.builder(MongoDBAPIDocument.class)
                         .enableDiscriminator(true).build();

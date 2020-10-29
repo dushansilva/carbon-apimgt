@@ -526,6 +526,7 @@ public class MongoDBPersistenceImpl implements APIPersistence {
         mongoDBAPIDocument.setEnableStore(api.isEnableStore());
         mongoDBAPIDocument.setTestKey(api.getTestKey());
         mongoDBAPIDocument.setLastUpdated(new Date());
+        mongoDBAPIDocument.setSwaggerDefinition(api.getSwaggerDefinition());
 
         //Validate if the API has an unsupported context before setting it in the artifact
         String tenantDomain = PrivilegedCarbonContext.getThreadLocalCarbonContext().getTenantDomain();
@@ -644,7 +645,7 @@ public class MongoDBPersistenceImpl implements APIPersistence {
         api.setWsdlUrl(mongoDBAPIDocument.getWsdlUrl());
         api.setWadlUrl(mongoDBAPIDocument.getWadlUrl());
         api.setThumbnailUrl(mongoDBAPIDocument.getThumbnailUrl());
-        api.setStatus(mongoDBAPIDocument.getStatus().toUpperCase());
+        api.setStatus(mongoDBAPIDocument.getStatus());
         api.setTechnicalOwner(mongoDBAPIDocument.getTechnicalOwner());
         api.setTechnicalOwnerEmail(mongoDBAPIDocument.getTechnicalOwnerEmail());
         api.setBusinessOwner(mongoDBAPIDocument.getBusinessOwner());
@@ -677,6 +678,7 @@ public class MongoDBPersistenceImpl implements APIPersistence {
         api.setEnableStore(mongoDBAPIDocument.isEnableStore());
         api.setTestKey(mongoDBAPIDocument.getTestKey());
         api.setLastUpdated(mongoDBAPIDocument.getLastUpdated());
+        api.setSwaggerDefinition(mongoDBAPIDocument.getSwaggerDefinition());
 
         api.setContextTemplate(mongoDBAPIDocument.getContextTemplate());
         api.setType(mongoDBAPIDocument.getType());
