@@ -3557,11 +3557,13 @@ public class ApisApiServiceImpl implements ApisApiService {
             }
 
             // adding the API and definition
-            apiProvider.addAPI(apiToAdd);
+            API api = apiProvider.addAPI(apiToAdd);
+            apiToAdd.setUUID(api.getUUID());
             apiProvider.saveSwaggerDefinition(apiToAdd, definitionToAdd);
-
+            APIIdentifier id = apiToAdd.getId();
+            id.setUuid(api.getUUID());
             // retrieving the added API for returning as the response
-            API addedAPI = apiProvider.getAPI(apiToAdd.getId());
+            API addedAPI = apiProvider.getAPI(id);
             APIDTO createdApiDTO = APIMappingUtil.fromAPItoDTO(addedAPI);
             // This URI used to set the location header of the POST response
             URI createdApiUri = new URI(RestApiConstants.RESOURCE_PATH_APIS + "/" + createdApiDTO.getId());
