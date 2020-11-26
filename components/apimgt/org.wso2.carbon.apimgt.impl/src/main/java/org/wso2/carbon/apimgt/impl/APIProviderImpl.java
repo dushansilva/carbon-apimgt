@@ -2267,7 +2267,8 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
                                 publishedEnvironments.removeAll(new ArrayList<String>(failedToPublishEnvironments
                                         .keySet()));
                                 api.setEnvironments(publishedEnvironments);
-                                updateApiArtifact(api, true, false);
+//                                updateApiArtifact(api, true, false);
+                                apiPersistenceInstance.changeAPILifeCycle(identifier.getUUID(), newStatus);
                                 failedGateways.clear();
                                 failedGateways.put("UNPUBLISHED", Collections.<String, String>emptyMap());
                                 failedGateways.put("PUBLISHED", failedToPublishEnvironments);
@@ -2283,7 +2284,8 @@ class APIProviderImpl extends AbstractAPIManager implements APIProvider {
                                 Set<String> publishedEnvironments = new HashSet<String>(api.getEnvironments());
                                 publishedEnvironments.addAll(failedToRemoveEnvironments.keySet());
                                 api.setEnvironments(publishedEnvironments);
-                                updateApiArtifact(api, true, false);
+                                apiPersistenceInstance.changeAPILifeCycle(identifier.getUUID(), newStatus);
+//                                updateApiArtifact(api, true, false);
                                 failedGateways.clear();
                                 failedGateways.put("UNPUBLISHED", failedToRemoveEnvironments);
                                 failedGateways.put("PUBLISHED", Collections.<String, String>emptyMap());
