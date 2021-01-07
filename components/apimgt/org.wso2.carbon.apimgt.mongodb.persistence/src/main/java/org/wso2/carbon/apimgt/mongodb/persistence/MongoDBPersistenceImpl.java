@@ -14,10 +14,8 @@
  *  limitations under the License.
  */
 
-package org.wso2.carbon.apimgt.persistence;
+package org.wso2.carbon.apimgt.mongodb.persistence;
 
-import com.mongodb.client.FindIterable;
-import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
@@ -26,17 +24,20 @@ import com.mongodb.client.gridfs.GridFSBuckets;
 import com.mongodb.client.gridfs.GridFSDownloadStream;
 import com.mongodb.client.gridfs.model.GridFSUploadOptions;
 import com.mongodb.client.model.Accumulators;
-import com.mongodb.client.model.BsonField;
 import com.mongodb.client.model.FindOneAndReplaceOptions;
 import com.mongodb.client.model.FindOneAndUpdateOptions;
 import com.mongodb.client.model.ReturnDocument;
-import com.mongodb.client.model.Updates;
 import com.mongodb.client.result.InsertOneResult;
-import org.apache.commons.io.IOUtils;
-import org.apache.jasper.tagplugins.jstl.core.ForEach;
-import org.bson.BsonNull;
 import org.bson.Document;
 import org.bson.types.ObjectId;
+import org.wso2.carbon.apimgt.mongodb.persistence.dto.MongoDBDevPortalAPI;
+import org.wso2.carbon.apimgt.mongodb.persistence.dto.MongoDBPublisherAPI;
+import org.wso2.carbon.apimgt.mongodb.persistence.mappers.DocumentationMapper;
+import org.wso2.carbon.apimgt.mongodb.persistence.mappers.MongoAPIMapper;
+import org.wso2.carbon.apimgt.mongodb.persistence.utils.MongoDBConnectionUtil;
+import org.wso2.carbon.apimgt.mongodb.persistence.utils.MongoDBUtil;
+import org.wso2.carbon.apimgt.persistence.APIConstants;
+import org.wso2.carbon.apimgt.persistence.APIPersistence;
 import org.wso2.carbon.apimgt.persistence.dto.APIDocumentation;
 import org.wso2.carbon.apimgt.persistence.dto.DevPortalAPI;
 import org.wso2.carbon.apimgt.persistence.dto.DevPortalAPIInfo;
@@ -45,11 +46,10 @@ import org.wso2.carbon.apimgt.persistence.dto.DevPortalContentSearchResult;
 import org.wso2.carbon.apimgt.persistence.dto.DocumentContent;
 import org.wso2.carbon.apimgt.persistence.dto.DocumentSearchResult;
 import org.wso2.carbon.apimgt.persistence.dto.Documentation;
-import org.wso2.carbon.apimgt.persistence.dto.DocumentationInfo;
 import org.wso2.carbon.apimgt.persistence.dto.Mediation;
 import org.wso2.carbon.apimgt.persistence.dto.MediationInfo;
-import org.wso2.carbon.apimgt.persistence.dto.MongoDBDevPortalAPI;
-import org.wso2.carbon.apimgt.persistence.dto.MongoDBPublisherAPI;
+//import org.wso2.carbon.apimgt.mongodb.persistence.dto.MongoDBDevPortalAPI;
+//import org.wso2.carbon.apimgt.mongodb.persistence.dto.MongoDBPublisherAPI;
 import org.wso2.carbon.apimgt.persistence.dto.Organization;
 import org.wso2.carbon.apimgt.persistence.dto.PublisherAPI;
 import org.wso2.carbon.apimgt.persistence.dto.PublisherAPIInfo;
@@ -67,13 +67,10 @@ import org.wso2.carbon.apimgt.persistence.exceptions.ThumbnailPersistenceExcepti
 import org.wso2.carbon.apimgt.persistence.exceptions.WSDLPersistenceException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.wso2.carbon.apimgt.persistence.mapper.DocumentationMapper;
-import org.wso2.carbon.apimgt.persistence.mapper.MongoAPIMapper;
-import org.wso2.carbon.apimgt.persistence.utils.MongoDBPersistenceUtil;
+//import org.wso2.carbon.apimgt.mongodb.persistence.mappers.DocumentationMapper;
+//import org.wso2.carbon.apimgt.mongodb.persistence.mappers.MongoAPIMapper;
 import org.wso2.carbon.apimgt.persistence.utils.PersistenceUtil;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -89,7 +86,6 @@ import static com.mongodb.client.model.Aggregates.project;
 import static com.mongodb.client.model.Aggregates.unwind;
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
-import static com.mongodb.client.model.Filters.elemMatch;
 import static com.mongodb.client.model.Projections.include;
 import static com.mongodb.client.model.Updates.combine;
 import static com.mongodb.client.model.Updates.pull;
@@ -209,21 +205,21 @@ public class MongoDBPersistenceImpl implements APIPersistence {
     private List<Document> getSearchAggregate(String query) {
         String searchQuery = getSearchQuery(query);
         List<String> paths = new ArrayList<>();
-        paths.add("name");
-        paths.add("provider");
+        paths.add("apiName");
+        paths.add("providerName");
         paths.add("version");
         paths.add("context");
-        paths.add("status");
-        paths.add("description");
-        paths.add("tags");
-        paths.add("gatewayLabels");
-        paths.add("additionalProperties");
+//        paths.add("status");
+//        paths.add("description");
+//        paths.add("tags");
+//        paths.add("gatewayLabels");
+//        paths.add("additionalProperties");
 
         Document search = new Document();
         Document wildCard = new Document();
         Document wildCardBody = new Document();
-        wildCardBody.put("path", paths);
-        wildCardBody.put("query", searchQuery);
+        wildCardBody.put("path", "apiName");
+        wildCardBody.put("query", "*");
         wildCardBody.put("allowAnalyzedField", true);
         wildCard.put("wildcard", wildCardBody);
         search.put("$search", wildCard);
@@ -343,7 +339,7 @@ public class MongoDBPersistenceImpl implements APIPersistence {
                     project(include("documentationList")),
                     group(new ObjectId(), Accumulators.push("documentationList",
                             "$documentationList"))
-                                                                                        ))
+            ))
                     .cursor();
             while (cursor.hasNext()) {
                 documentation = cursor.next();
@@ -393,7 +389,7 @@ public class MongoDBPersistenceImpl implements APIPersistence {
                 and(
                         eq("_id", new ObjectId(apiId)),
                         eq("documentationList.docId", docId)
-                   ),
+                ),
                 set("documentationList.$", apiDocumentation)
                 , options);
         Set<APIDocumentation> documentationList = updatedAPI.getDocumentationList();
@@ -417,7 +413,7 @@ public class MongoDBPersistenceImpl implements APIPersistence {
                 project(include("documentationList")),
                 group(new ObjectId(), Accumulators.push("documentationList",
                         "$documentationList"))
-                                                                                    ))
+        ))
                 .cursor();
         while (cursor.hasNext()) {
             MongoDBPublisherAPI mongoDBAPIDocument = cursor.next();
@@ -439,7 +435,7 @@ public class MongoDBPersistenceImpl implements APIPersistence {
         documentContent.setSourceType(DocumentContent.ContentSourceType.valueOf(sourceType));
 
         if (DocumentContent.ContentSourceType.FILE.name().equalsIgnoreCase(sourceType) && gridFsReference != null) {
-            MongoDatabase database = MongoDBPersistenceUtil.getDatabase();
+            MongoDatabase database = MongoDBConnectionUtil.getDatabase();
             GridFSBucket gridFSBucket = GridFSBuckets.create(database, org.getName());
             GridFSDownloadStream downloadStream = gridFSBucket.openDownloadStream(gridFsReference);
             ResourceFile resourceFile = new ResourceFile(downloadStream, apiDocumentation.getContentType());
@@ -459,7 +455,7 @@ public class MongoDBPersistenceImpl implements APIPersistence {
         String sourceType = apiDocumentation.getSourceType().name();
         ObjectId gridFsReference = apiDocumentation.getGridFsReference();
         if (DocumentContent.ContentSourceType.FILE.name().equalsIgnoreCase(sourceType) && gridFsReference != null) {
-            MongoDatabase database = MongoDBPersistenceUtil.getDatabase();
+            MongoDatabase database = MongoDBConnectionUtil.getDatabase();
             GridFSBucket gridFSFilesBucket = GridFSBuckets.create(database, org.getName());
             gridFSFilesBucket.delete(apiDocumentation.getGridFsReference());
         }
@@ -469,8 +465,8 @@ public class MongoDBPersistenceImpl implements APIPersistence {
                 pull(
                         "documentationList",
                         eq("docId", new ObjectId(docId))
-                    )
-                            );
+                )
+        );
     }
 
     private APIDocumentation getMongodbDocUsingId(Organization org, String apiId, String docId)
@@ -485,7 +481,7 @@ public class MongoDBPersistenceImpl implements APIPersistence {
                 project(include("documentationList")),
                 group(new ObjectId(), Accumulators.push("documentationList",
                         "$documentationList"))
-                                                                                    ))
+        ))
                 .cursor();
 
         //This will only return one api and with one doc
@@ -503,7 +499,7 @@ public class MongoDBPersistenceImpl implements APIPersistence {
 
     private void handleFileTypeContent(Organization org, String apiId, String docId, DocumentContent content)
             throws DocumentationPersistenceException {
-        MongoDatabase database = MongoDBPersistenceUtil.getDatabase();
+        MongoDatabase database = MongoDBConnectionUtil.getDatabase();
         MongoCollection<MongoDBPublisherAPI> collection = getPublisherCollection(org.getName());
         GridFSBucket gridFSFilesBucket = GridFSBuckets.create(database, org.getName());
         ResourceFile resourceFile = content.getResourceFile();
@@ -511,24 +507,23 @@ public class MongoDBPersistenceImpl implements APIPersistence {
         GridFSUploadOptions options = new GridFSUploadOptions().chunkSizeBytes(358400);
         String textContent = null;
         String contentType = resourceFile.getContentType();
-
         try {
-            File file = PersistenceUtil.writeStream(inputStream, resourceFile.getName());
-            InputStream extractStream = PersistenceUtil.readStream(file, resourceFile.getName());
+            File file = MongoDBUtil.writeStream(inputStream, resourceFile.getName());
+            InputStream extractStream = MongoDBUtil.readStream(file, resourceFile.getName());
             if (contentType.equalsIgnoreCase(APIConstants.DOCUMENTATION_PDF_CONTENT_TYPE)) {
-                textContent = PersistenceUtil.extractPDFText(extractStream);
+                textContent = MongoDBUtil.extractPDFText(extractStream);
             }
             if (contentType.equalsIgnoreCase(APIConstants.DOCUMENTATION_DOC_CONTENT_TYPE)) {
-                textContent = PersistenceUtil.extractDocText(extractStream);
+                textContent = MongoDBUtil.extractDocText(extractStream);
             }
             if (contentType.equalsIgnoreCase(APIConstants.DOCUMENTATION_DOCX_CONTENT_TYPE)) {
-                textContent = PersistenceUtil.extractDocXText(extractStream);
+                textContent = MongoDBUtil.extractDocXText(extractStream);
             }
             if (contentType.equalsIgnoreCase(APIConstants.DOCUMENTATION_TXT_CONTENT_TYPE)) {
-                textContent = PersistenceUtil.extractPlainText(extractStream);
+                textContent = MongoDBUtil.extractPlainText(extractStream);
             }
 
-            InputStream gridFsStream = PersistenceUtil.readStream(file, resourceFile.getName());
+            InputStream gridFsStream = MongoDBUtil.readStream(file, resourceFile.getName());
             ObjectId gridFsReference =
                     gridFSFilesBucket.uploadFromStream(resourceFile.getName(), gridFsStream, options);
 
@@ -536,13 +531,13 @@ public class MongoDBPersistenceImpl implements APIPersistence {
                     and(
                             eq("_id", new ObjectId(apiId)),
                             eq("documentationList.docId", new ObjectId(docId))
-                       ),
+                    ),
                     combine(
                             set("documentationList.$.gridFsReference", gridFsReference),
                             set("documentationList.$.contentType", contentType),
                             set("documentationList.$.textContent", textContent)
-                           )
-                                );
+                    )
+            );
         } catch (IOException | PersistenceException e) {
             log.error("Error when extracting text content from file ", e);
             throw new DocumentationPersistenceException("Failed to documentation content for " + docId +
@@ -556,9 +551,9 @@ public class MongoDBPersistenceImpl implements APIPersistence {
                 and(
                         eq("_id", new ObjectId(apiId)),
                         eq("documentationList.docId", new ObjectId(docId))
-                   ),
+                ),
                 set("documentationList.$.textContent", content.getTextContent())
-                            );
+        );
     }
 
     @Override
@@ -608,25 +603,25 @@ public class MongoDBPersistenceImpl implements APIPersistence {
     }
 
     private MongoCollection<MongoDBPublisherAPI> getPublisherCollection(String orgName) {
-        MongoDatabase database = MongoDBPersistenceUtil.getDatabase();
+        MongoDatabase database = MongoDBConnectionUtil.getDatabase();
         return database.getCollection(orgName, MongoDBPublisherAPI.class);
     }
 
     private MongoCollection<MongoDBDevPortalAPI> getDevPortalCollection(String orgName) {
-        MongoDatabase database = MongoDBPersistenceUtil.getDatabase();
+        MongoDatabase database = MongoDBConnectionUtil.getDatabase();
         return database.getCollection(orgName, MongoDBDevPortalAPI.class);
     }
 
     @Override
     public PublisherContentSearchResult searchContentForPublisher(Organization org, String searchQuery, int start,
-            int offset, UserContext ctx) throws APIPersistenceException {
+                                                                  int offset, UserContext ctx) throws APIPersistenceException {
         // TODO Auto-generated method stub
         return null;
     }
 
     @Override
     public DevPortalContentSearchResult searchContentForDevPortal(Organization org, String searchQuery, int start,
-            int offset, UserContext ctx) throws APIPersistenceException {
+                                                                  int offset, UserContext ctx) throws APIPersistenceException {
         // TODO Auto-generated method stub
         return null;
     }

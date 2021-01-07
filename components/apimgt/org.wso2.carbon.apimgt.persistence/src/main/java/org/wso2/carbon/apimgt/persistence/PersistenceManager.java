@@ -16,46 +16,44 @@
 
 package org.wso2.carbon.apimgt.persistence;
 
+import net.consensys.cava.toml.Toml;
+import net.consensys.cava.toml.TomlParseResult;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.wso2.carbon.apimgt.persistence.internal.ServiceReferenceHolder;
+import org.wso2.carbon.utils.CarbonUtils;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
 public class PersistenceManager {
-  //  String userName;
-  //  Organization org;
+
     private static APIPersistence apiPersistenceInstance;
+    private static TomlParseResult tomlParseResult = null;
+    private static Log log = LogFactory.getLog(PersistenceManager.class);
 
     public static APIPersistence getPersistenceInstance(String userName) {
-        //condition to check the configured Persistence type
-        // if (Persistence type is Registry)
-//        if (apiPersistenceInstance == null) {
-//            synchronized (RegistryPersistenceImplOld.class) {
-//                if (apiPersistenceInstance == null) {
-//                    apiPersistenceInstance = new RegistryPersistenceImplOld(userName);
-//                }
-//            }
-//        }
-        /*//else if (Persistence type is MongoDb)
-        else if (apiPersistenceInstance == null) {
-            synchronized (RegistryPersistenceImpl.class) {
-                if (apiPersistenceInstance == null) {
-                    apiPersistenceInstance = new MongoDBPersistenceImpl(userName);
+
+        synchronized (RegistryPersistenceImpl.class) {
+            if (apiPersistenceInstance == null) {
+                if (tomlParseResult == null) {
+                    Path source = Paths.get(CarbonUtils.getCarbonConfigDirPath() + File.separator + "deployment.toml");
+                    try {
+                        tomlParseResult = Toml.parse(source);
+                    } catch (IOException e) {
+                        log.error("error when parsing toml ");
+                    }
+                }
+                String databaseType = tomlParseResult.getString("database.reg_db.type");
+                if ("mongodb".equalsIgnoreCase(databaseType)) {
+                    apiPersistenceInstance = ServiceReferenceHolder.getInstance().getApiPersistence();
+                } else {
+                    apiPersistenceInstance = new RegistryPersistenceImpl(userName);
                 }
             }
-        }*//*
-            synchronized (RegistryPersistenceImpl.class) {
-                if (apiPersistenceInstance == null) {
-                    apiPersistenceInstance = new MongoDBPersistenceImpl(userName);
-                }
-            }*/
-        return new RegistryPersistenceImpl(userName);
-//        return apiPersistenceInstance;
+            return apiPersistenceInstance;
+        }
     }
-
-//    public static APIPersistence getInstance(String username) throws APIManagementException {
-//        if (apiPersistenceInstance == null) {
-//            synchronized (RegistryPersistenceManager.class) {
-//                if (apiPersistenceInstance == null) {
-//                    apiPersistenceInstance = new RegistryPersistenceManager(username);
-//                }
-//            }
-//        }
-//        return apiPersistenceInstance;
-//    }
 }

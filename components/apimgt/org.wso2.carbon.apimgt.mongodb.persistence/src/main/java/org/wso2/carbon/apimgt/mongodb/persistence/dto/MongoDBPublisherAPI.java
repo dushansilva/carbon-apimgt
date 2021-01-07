@@ -16,17 +16,31 @@
  * under the License.
  */
 
-package org.wso2.carbon.apimgt.persistence.dto;
+package org.wso2.carbon.apimgt.mongodb.persistence.dto;
 
 import org.bson.codecs.pojo.annotations.BsonId;
 import org.bson.codecs.pojo.annotations.BsonProperty;
 import org.bson.types.ObjectId;
+import org.wso2.carbon.apimgt.persistence.dto.APIDocumentation;
+import org.wso2.carbon.apimgt.persistence.dto.PublisherAPI;
 
-public class MongoDBDevPortalAPI extends DevPortalAPI {
+import java.util.Set;
+
+public class MongoDBPublisherAPI extends PublisherAPI {
 
     @BsonProperty(value = "_id")
     @BsonId
     private ObjectId mongodbUuId;
+
+    private Set<APIDocumentation> documentationList;
+
+    public Set<APIDocumentation> getDocumentationList() {
+        return documentationList;
+    }
+
+    public void setDocumentationList(Set<APIDocumentation> documentationList) {
+        this.documentationList = documentationList;
+    }
 
     public ObjectId getMongodbUuId() {
         return mongodbUuId;

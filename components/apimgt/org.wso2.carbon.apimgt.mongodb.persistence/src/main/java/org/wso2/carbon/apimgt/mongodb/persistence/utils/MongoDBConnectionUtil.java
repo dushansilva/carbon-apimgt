@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package org.wso2.carbon.apimgt.persistence.utils;
+package org.wso2.carbon.apimgt.mongodb.persistence.utils;
 
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
@@ -28,12 +28,12 @@ import org.apache.commons.logging.LogFactory;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.pojo.ClassModel;
 import org.bson.codecs.pojo.PojoCodecProvider;
+import org.wso2.carbon.apimgt.mongodb.persistence.dto.MongoDBDevPortalAPI;
+import org.wso2.carbon.apimgt.mongodb.persistence.dto.MongoDBPublisherAPI;
 import org.wso2.carbon.apimgt.persistence.dto.APIDocumentation;
 import org.wso2.carbon.apimgt.persistence.dto.CORSConfiguration;
 import org.wso2.carbon.apimgt.persistence.dto.DeploymentEnvironments;
 import org.wso2.carbon.apimgt.persistence.dto.DevPortalAPI;
-import org.wso2.carbon.apimgt.persistence.dto.MongoDBDevPortalAPI;
-import org.wso2.carbon.apimgt.persistence.dto.MongoDBPublisherAPI;
 import org.wso2.carbon.apimgt.persistence.dto.PublisherAPI;
 import org.wso2.carbon.utils.CarbonUtils;
 
@@ -45,11 +45,13 @@ import java.nio.file.Paths;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
 
-public class MongoDBPersistenceUtil {
+public class MongoDBConnectionUtil {
 
-    private static final Log log = LogFactory.getLog(MongoDBPersistenceUtil.class);
+    private static final Log log = LogFactory.getLog(MongoDBConnectionUtil.class);
     private static MongoClient mongoClient = null;
     private static TomlParseResult tomlParseResult = null;
+    private static String database = null;
+    private static final String DEFAULT_DATABASE = "APIM_DB";
 
     /**
      * Initializes the datasource for mongodb
@@ -59,7 +61,7 @@ public class MongoDBPersistenceUtil {
             return;
         }
 
-        synchronized (MongoDBPersistenceUtil.class) {
+        synchronized (MongoDBConnectionUtil.class) {
             if (mongoClient == null) {
                 if (log.isDebugEnabled()) {
                     log.debug("Initializing mongodb datasource");
@@ -76,7 +78,7 @@ public class MongoDBPersistenceUtil {
 
                 String parsedConnectionString = tomlParseResult.getString("database.reg_db.connectionString");
                 ConnectionString connectionString = new ConnectionString(parsedConnectionString);
-
+                database = connectionString.getDatabase();
                 ClassModel<MongoDBPublisherAPI> mongoDBAPIDocument = ClassModel.builder(MongoDBPublisherAPI.class)
                         .enableDiscriminator(false).build();
                 ClassModel<PublisherAPI> publisherAPI = ClassModel.builder(PublisherAPI.class)
@@ -121,7 +123,10 @@ public class MongoDBPersistenceUtil {
 
     public static MongoDatabase getDatabase(){
         MongoClient mongoClient = getMongoClient();
-        MongoDatabase database = mongoClient.getDatabase("APIM_DB");
-        return database;
+        if (database != null) {
+            return mongoClient.getDatabase(database);
+        } else {
+            return mongoClient.getDatabase(DEFAULT_DATABASE);
+        }
     }
 }
